@@ -1,0 +1,23 @@
+@layer theme,base,components,utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+.menu.library-popup{position:relative;inset:auto;margin:0;max-height:var(--radix-dropdown-menu-content-available-height);z-index:1000}
+[data-radix-popper-content-wrapper]{z-index:1000!important}
+.library-popup button[data-highlighted]{background:var(--color-paper-2);outline:none}
+.app-modal{position:fixed;z-index:501;top:50%;left:50%;transform:translate(-50%,-50%);margin:0}
+.modal-backdrop{z-index:500}
+.import-cover{display:block;width:100%;height:100%;object-fit:cover}
+.epub-surface{height:100dvh;width:100%;padding-block:clamp(30px,7vh,64px)}
+.epub-surface foliate-view{display:block;width:100%;height:100%}
+.pdf-document{padding:18px 0 6rem;min-height:100dvh;text-align:center;background:var(--room-control)}
+.pdf-sheet{position:relative;display:inline-block;max-width:100%;line-height:0;background:white;box-shadow:var(--surface-shadow)}
+.pdf-sheet canvas{max-width:100%;display:block}
+.pdf-sheet .textLayer{position:absolute;inset:0;line-height:1;overflow:clip;text-align:initial;text-size-adjust:none;transform-origin:0 0;forced-color-adjust:none;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+.pdf-sheet .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
+.pdf-sheet .textLayer> :not(.markedContent),.pdf-sheet .textLayer .markedContent span:not(.markedContent){font-size:calc(var(--text-scale-factor) * var(--font-height));transform:rotate(var(--rotate,0deg)) scaleX(var(--scale-x,1)) scale(var(--min-font-size-inv))}
+.reader[data-paper=dark] .pdf-sheet canvas{filter:invert(.87) hue-rotate(180deg)}
+.markdown-content{overflow-wrap:anywhere}.markdown-content pre{overflow:auto}.markdown-content img{max-width:100%}
+body.reduce-motion *,body.reduce-motion *::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+.dialog-content [role=alert]{color:var(--brand-thread);overflow-wrap:anywhere}
+.reader-loading{position:fixed;inset:40% auto auto 50%;translate:-50% 0;display:grid;justify-items:center;gap:12px;color:var(--room-muted);animation:show-loading .15s .25s both}
+@keyframes show-loading{from{opacity:0}to{opacity:1}}
