@@ -1,0 +1,26 @@
+[package]
+name = "hearthread"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+
+[lib]
+name = "hearthread_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-opener = "2"
+rusqlite = { version = "0.43", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+tempfile = "3"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
