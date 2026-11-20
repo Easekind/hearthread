@@ -1,0 +1,128 @@
+/* Most actions update data immediately. Motion identifies the source of a layer. */
+:root {
+  --press-time:100ms;
+  --popover-time:150ms;
+  --dialog-time:200ms;
+  --book-time:240ms;
+}
+.ui-glyph {stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
+[data-action=toggle-nav][aria-expanded=true] .sidebar-pane {fill:currentColor}
+.ui-glyph[data-symbol=more] {fill:currentColor;stroke-width:1}
+.pdf-fit .ui-glyph {width:16px;height:16px}
+.chapter-position input {min-height:24px}
+.studio-search input {height:100%;min-width:0}
+.studio-search input::-webkit-search-cancel-button {display:none}
+::selection {background:rgba(114,157,190,.27);color:currentColor}
+.theme-dark ::selection,.reading-room[data-paper=dark] ::selection {background:rgba(161,193,218,.30)}
+.reading-room:not([data-paper=dark]) ::selection {background:rgba(114,157,190,.27)}
+.studio-search:focus-within,.room-search:focus-within,.dialog-field .field-input:focus {
+  outline:1px solid color-mix(in srgb,var(--color-ink) 52%,transparent);outline-offset:1px
+}
+@media(forced-colors:active) {
+  .studio-search:focus-within,.room-search:focus-within,.dialog-field .field-input:focus {outline-color:Highlight}
+}
+.studio-search input:focus-visible,.room-search input:focus-visible {outline:0}
+.wall-meta [data-book-menu] {width:32px;height:32px;margin:0 -4px 0 0;position:relative}
+.wall-meta [data-book-menu] svg,.list-view [data-book-menu] svg {width:18px;height:18px}
+button[aria-haspopup=menu][aria-expanded=true] {background:var(--color-paper-2)}
+.theme-paper {
+  --solid-material:#f7f2e7;--material:rgba(247,242,231,.9);--sidebar-material:#ece5d7;--selected-nav:#fffcf4;
+}
+.list-view .list-book-title {font-size:.875rem;line-height:1.4;letter-spacing:-.01em}
+.list-view small {display:block;margin-top:3px;font-size:.75rem;line-height:1.4;color:var(--color-muted)}
+.list-view .title-cell {min-width:0}
+.list-view .title-cell>button {min-width:0;text-align:start;overflow-wrap:anywhere}
+.list-view [data-select] {accent-color:var(--brand-thread)}
+:where(.studio,.modal,.library-drawer,.reading-room,.library-popup) button:focus-visible,
+.reading-tools-access:focus-visible {outline:2px solid var(--room-accent,var(--brand-thread));outline-offset:2px}
+:where(.studio,.library-drawer,.modal,.reading-room) button:not(.wall-select) {touch-action:manipulation}
+:where(.tool-trigger,.room-tool,.room-back,.paper-choice,.pref-action,.icon-button,.button,.nav-item,.view-switch button) {
+  transition:scale var(--press-time) var(--ease-out)
+}
+:where(.tool-trigger,.room-tool,.room-back,.paper-choice,.pref-action,.icon-button,.button,.nav-item,.view-switch button):active:not(:disabled) {scale:.97}
+
+.wall-object,.wall-object>.book-cover {transition:transform var(--book-time) var(--ease-out)}
+.room-head,.room-dock {transition-timing-function:var(--ease-out)}
+.library-popup,.room-panel,.toast,.modal-backdrop,.modal {
+  transition:opacity var(--popover-time) var(--ease-out),scale var(--popover-time) var(--ease-out),translate var(--popover-time) var(--ease-out)
+}
+.modal-backdrop,.modal {transition-duration:var(--dialog-time)}
+.modal-backdrop.is-leaving,.modal-backdrop.is-leaving .modal,.library-popup.is-leaving,.room-panel.is-leaving,.toast.is-leaving {opacity:0;pointer-events:none}
+.modal-backdrop.is-leaving .modal {scale:.98}
+.library-popup.is-leaving,.room-panel.is-leaving {scale:.97}
+.toast {max-width:calc(100vw - 28px);border-radius:14px}
+.toast.is-leaving {translate:0 6px}
+.toast button {white-space:nowrap;min-height:32px}
+body:has(.reading-dock) .toast {bottom:calc(max(18px,env(safe-area-inset-bottom)) + 78px)}
+@starting-style {
+  .library-popup,.room-panel {opacity:0;scale:.97}
+  .modal-backdrop {opacity:0}.modal {scale:.98}
+  .toast {opacity:0;translate:0 6px}
+}
+@media(max-width:700px),(pointer:coarse) {
+  .wall-meta [data-book-menu]::after {content:'';position:absolute;inset:-6px}
+  .studio-topbar .icon-button,.studio-topbar .import-button,.list-view [data-book-menu],.drawer-close,.room-panel .icon-button,.modal .icon-button {min-width:44px;min-height:44px}
+  .studio-search {min-height:44px}
+  .view-switch button {min-height:38px}
+  .pref-action,.type-slider input {min-height:32px}
+  .chapter-position {min-height:44px;align-content:center;gap:0}
+  .chapter-position input {height:28px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .library-popup,.room-panel,.modal,.toast,.room-head,.room-dock {scale:1!important;translate:none!important}
+  .modal,.library-popup,.room-panel,.modal-backdrop,.toast {transition:none}
+  .wall-object,.wall-object>.book-cover {transition:none}
+}
+@media(prefers-contrast:more) {
+  .wall-author,.wall-meta,.list-view small {color:var(--color-ink)}
+  .preferences-nav button[aria-current=page],.nav-item.is-current,.view-switch .active {outline:1px solid currentColor}
+}
+html[data-input=keyboard] *,html[data-input=keyboard] *::before,html[data-input=keyboard] *::after {
+  transition-duration:0s!important;animation-duration:0s!important
+}
+
+.library-empty {display:grid;justify-items:center;gap:8px;max-width:36rem;margin:2rem auto;text-align:center;padding:clamp(1.5rem,6vw,4rem) 1.25rem}
+.library-empty .empty-symbol {display:grid;place-items:center;width:44px;height:44px;margin:0 0 4px;border-radius:13px;background:var(--color-paper-2);color:var(--color-muted)}
+.library-empty .empty-symbol svg {width:22px;height:22px;margin:0}
+.library-empty h2 {margin:0;font:610 1.15rem/1.4 var(--font-ui);letter-spacing:-.02em;overflow-wrap:anywhere}
+.library-empty p {margin:0;overflow-wrap:anywhere}.library-empty .button {margin:12px 0 0;min-height:40px;border-radius:9px}
+.queue-status,.field-feedback {font:.78rem/1.5 var(--font-ui)}
+.queue-status {margin:0 0 6px;color:var(--color-muted);font-variant-numeric:tabular-nums}
+.file-review li.skipped>svg,.file-review li.skipped small,.field-feedback {color:var(--brand-thread)}
+.field-feedback:not([hidden]) {display:block;margin-top:6px}
+.modal input[aria-invalid=true] {border-color:var(--brand-thread)}
+.passage-match small {display:block;font:550 .72rem/1.5 var(--font-ui);margin-bottom:4px;color:var(--room-muted)}
+::highlight(found-passage) {background-color:#eed78b;color:#342d15}
+.preferences-nav button,.contents-list button,.passage-match,.file-drop,.selection-bar button,.pref-rows .key,.reset-reading {transition:scale var(--press-time) var(--ease-out)}
+:where(.preferences-nav button,.contents-list button,.passage-match,.file-drop,.selection-bar button,.pref-rows .key,.reset-reading):active:enabled {scale:.98}
+@media(prefers-reduced-motion:reduce) {
+  :where(.preferences-nav button,.contents-list button,.passage-match,.file-drop,.selection-bar button,.pref-rows .key,.reset-reading):active:enabled {scale:1}
+}
+.wall-select {scroll-margin-block:1rem 7rem}
+.list-view tbody tr {cursor:pointer}
+.list-view tbody tr:focus-within {background:var(--color-paper-2)}
+@media(hover:hover) and (pointer:fine) {
+  .list-view tbody tr:hover {background:var(--color-paper-2)}
+  .contents-list button:hover,.pref-action:hover,.selection-bar button:not(:disabled,.finish-selection):hover {color:var(--color-ink)}
+}
+.heading-name>span,.wall-meta,.list-view .num,.queue-status,.match-count {font-variant-numeric:tabular-nums}
+
+/* Form selections share the library category trigger and its anchored menu. */
+.menu.library-popup[popover] {inset:auto;margin:0}
+.field-trigger {min-width:6.25rem;max-width:min(60%,18rem);justify-content:space-between}
+.destination .field-trigger {margin-inline-start:auto}
+.reading-room .field-trigger {color:var(--reader-ink)}
+.reading-room .field-trigger[aria-expanded=true] {background:var(--room-control)}
+@media (hover:hover) and (pointer:fine) {
+  .reading-room .field-trigger:hover {background:var(--room-control)}
+}
+.reading-room .library-popup {background:var(--reader-paper);border-color:var(--room-line);color:var(--reader-ink)}
+.reading-room .library-popup button:focus-visible {background:var(--room-control)}
+@media (hover:hover) and (pointer:fine) {
+  .reading-room .library-popup button:hover {background:var(--room-control)}
+}
+.reading-room .library-popup [aria-checked=true] svg {color:var(--room-accent)}
+@media(max-width:600px){
+ .mobile-preference {padding:0;background:transparent}
+ .mobile-preference .field-trigger {max-width:100%;width:max-content;gap:8px}
+}
