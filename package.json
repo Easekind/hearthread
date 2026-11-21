@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
+  "packageManager": "bun@1.3.10",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -10,9 +11,9 @@
     "tauri": "tauri",
     "test:e2e": "playwright test",
     "test:native": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "predev": "node scripts/runtime-licenses.mjs",
-    "prebuild": "node scripts/runtime-licenses.mjs",
-    "test:webview": "npm run build && cargo run --features custom-protocol --manifest-path src-tauri/Cargo.toml --example webview_smoke"
+    "predev": "bun scripts/runtime-licenses.mjs",
+    "prebuild": "bun scripts/runtime-licenses.mjs",
+    "test:webview": "bun run build && cargo run --features custom-protocol --manifest-path src-tauri/Cargo.toml --example webview_smoke"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.3.1",

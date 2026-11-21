@@ -1,20 +1,59 @@
 // Keep redistributable notices alongside the offline application.
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
-const notices = [];
-for (const [path, item] of Object.entries(lock.packages)) {
-  if (!path || item.dev || item.optional) continue;
-  const name = path.split("node_modules/").at(-1);
-  const sources = readdirSync(path, { withFileTypes: true }).filter(
-    (f) =>
-      f.isFile() && /^(license|licence|notice|copying)(\.|-|$)/i.test(f.name),
-  );
-  notices.push(
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join, resolve } from "node:path";
+
+const root = resolve("package.json");
+const notices = new Map();
+
+function collect(name, parent, optional = false) {
+  const manifest = createRequire(parent)
+    .resolve.paths(name)
+    .map((dir) => join(dir, name, "package.json"))
+    .find(existsSync);
+  if (!manifest) {
+    if (optional) return;
+    throw new Error(`Missing runtime dependency ${name} required by ${parent}`);
+  }
+  const path = realpathSync(manifest);
+  if (notices.has(path)) return;
+  const pkg = JSON.parse(readFileSync(path, "utf8"));
+  const directory = dirname(path);
+  const sources = readdirSync(directory, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        /^(license|licence|notice|copying)(\.|-|$)/i.test(entry.name),
+    )
+    .map((entry) => entry.name)
+    .sort();
+  notices.set(
+    path,
     [
-      name + " " + item.version + " (" + (item.license ?? "see upstream") + ")",
-      ...sources.map((f) => readFileSync(join(path, f.name), "utf8")),
+      `${pkg.name} ${pkg.version} (${pkg.license ?? "see upstream"})`,
+      ...sources.map((file) => readFileSync(join(directory, file), "utf8")),
     ].join("\n"),
   );
+  for (const dep of Object.keys(pkg.dependencies ?? {})) {
+    if (!(dep in (pkg.optionalDependencies ?? {}))) collect(dep, path);
+  }
+  for (const peer of Object.keys(pkg.peerDependencies ?? {})) {
+    collect(peer, path, pkg.peerDependenciesMeta?.[peer]?.optional);
+  }
 }
-writeFileSync("public/licenses/runtime.txt", notices.join("\n\n"));
+
+for (const name of Object.keys(
+  JSON.parse(readFileSync(root, "utf8")).dependencies,
+)) {
+  collect(name, root);
+}
+writeFileSync(
+  "public/licenses/runtime.txt",
+  [...new Set(notices.values())].sort().join("\n\n"),
+);

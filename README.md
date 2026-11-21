@@ -4,21 +4,21 @@ hearthread 是一款本地优先的中文阅读器，支持 EPUB、PDF 和独立
 
 ## 运行
 
-使用 Node.js 22.23 或更新版本、npm 和稳定版 Rust。在 macOS 安装 Xcode Command Line Tools；Windows 需要 MSVC C++ 工具链和 WebView2。
+使用 Bun 1.3.10、Node.js 22.23 或更新版本 和稳定版 Rust。在 macOS 安装 Xcode Command Line Tools；Windows 需要 MSVC C++ 工具链和 WebView2。
 
 ```sh
-npm ci
-npm run tauri -- dev
+bun install --frozen-lockfile
+bun run tauri dev
 ```
 
-`npm run dev` 在浏览器中打开相同的界面，默认地址为 `http://127.0.0.1:1420`。浏览器使用独立的 IndexedDB 书库，可以用备份在浏览器和原生应用之间转移书籍。
+`bun run dev` 在浏览器中打开相同的界面，默认地址为 `http://127.0.0.1:1420`。浏览器使用独立的 IndexedDB 书库，可以用备份在浏览器和原生应用之间转移书籍。
 
 | 平台 | 构建命令 | 环境 |
 | --- | --- | --- |
-| macOS | `npm run tauri -- build --bundles app` | macOS 14+，当前提供本机 Apple Silicon 构建 |
-| Windows | `npm run tauri -- build` | Windows 11，近期 WebView2 |
-| iOS | `npm run tauri -- ios build --debug --target aarch64-sim` | 完整 Xcode、iOS SDK、Apple Silicon 模拟器，最低 iOS 17 |
-| Android | `npm run tauri -- android build --debug --apk --target aarch64` | JDK、Android SDK 37、NDK、Rust Android target，最低 API 30，近期系统 WebView |
+| macOS | `bun run tauri build --bundles app` | macOS 14+，当前提供本机 Apple Silicon 构建 |
+| Windows | `bun run tauri build` | Windows 11，近期 WebView2 |
+| iOS | `bun run tauri ios build --debug --target aarch64-sim` | 完整 Xcode、iOS SDK、Apple Silicon 模拟器，最低 iOS 17 |
+| Android | `bun run tauri android build --debug --apk --target aarch64` | JDK、Android SDK 37、NDK、Rust Android target，最低 API 30，近期系统 WebView |
 
 桌面端使用系统窗口装饰。移动端原生工程在 `src-tauri/gen`。iOS 真机分发还需要配置自己的开发团队和签名。仓库提供手动触发的四平台构建工作流。
 
@@ -35,12 +35,12 @@ npm run tauri -- dev
 原生应用在系统应用数据目录下创建 `library/`。macOS 默认为 `~/Library/Application Support/app.hearthread.reader/library/`。当前版本使用一个本地读者身份，远端账户与 S3 同步留在后续版本。
 
 ```sh
-npm run build
-npm run test:native
-npm run test:e2e
-npm run test:webview
+bun run build
+bun run test:native
+bun run test:e2e
+bun run test:webview
 ```
 
-端到端测试默认使用已安装的 Google Chrome。使用 Playwright 自带 Chromium 时，先运行 `npx playwright install chromium`，再设置 `PLAYWRIGHT_CHANNEL=chromium`。提供 `HEARTHREAD_TEST_EPUB`、`HEARTHREAD_TEST_PDF` 两个本地文件路径会启用个人书库验收用例。`test:webview` 在原生 WebView 中使用一次性书库，独立于日常阅读数据。
+端到端测试默认使用已安装的 Google Chrome。使用 Playwright 自带 Chromium 时，先运行 `bunx playwright install chromium`，再设置 `PLAYWRIGHT_CHANNEL=chromium`。提供 `HEARTHREAD_TEST_EPUB`、`HEARTHREAD_TEST_PDF` 两个本地文件路径会启用个人书库验收用例。`test:webview` 在原生 WebView 中使用一次性书库，独立于日常阅读数据。
 
 [架构与开源调研](docs/architecture.md) · [v0.1 验收记录](docs/verification/README.md) · [交互设计原稿](docs/design/v0.1/index.html)
