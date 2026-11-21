@@ -12,7 +12,7 @@
 | [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog) | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互 | Button 变体、菜单和对话框采用设计稿样式。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
 | [rusqlite](https://github.com/rusqlite/rusqlite) | 在 Rust 层使用随应用打包的 SQLite | 参数化 SQL、WAL、FULL 同步、每批变更使用一个事务 |
 
-npm 和 Cargo 的精确解析版本在各自锁文件中。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。
+Bun 和 Cargo 分别通过 `bun.lock` 和 `Cargo.lock` 锁定依赖版本。Bun 版本在 `package.json` 的 `packageManager` 中指定，CI 按此版本执行冻结安装。项目级 `.npmrc` 指定公共注册表，保证本地和 CI 使用同一依赖来源。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。
 
 ## 读写路径
 
@@ -41,7 +41,7 @@ React 组件控制真实交互与持久化。原稿 CSS 作为独立静态资源
 - `src-tauri/tauri.conf.json` 管理系统目标、桌面窗口与 CSP；`capabilities/default.json` 限制原生能力。导出原件通过系统保存对话框取得目标。开发与验收书库使用不同的应用标识。
 - WKWebView 18.6 缺少新版 PDF.js 默认构建用到的 Map 方法。主模块与 Worker 统一采用同版本的 legacy 构建，自带所需兼容层。解码器路径使用绝对应用 URL，由主页面代读资源。
 - 浏览器验收使用独立的 `.qa-dist` 生产构建，避免开发服务器热更新或同时打包原生应用中断测试。截图比较等待网络和字体就绪。
-- macOS、Windows 共用 Tauri 桌面入口。iOS 工程由 Tauri CLI 生成。当前主机缺少 Android SDK/NDK，Android 工程按锁定的 [Tauri CLI 模板](https://github.com/tauri-apps/tauri/tree/9319e539f34237035cb4693bed9246660bc0a926/crates/tauri-cli/templates/mobile/android) 展开，保留官方 Gradle wrapper、Kotlin 桥接和本项目图标。在完整 SDK 环境可运行 `npm run tauri -- android init` 重新生成。
-- 本地原文件与数据库在同一书库下，整库 ZIP 的创建和展开会占用与备份大小相关的内存。字体与开源许可随应用打包，第三方依赖许可清单从锁文件重建。
+- macOS、Windows 共用 Tauri 桌面入口。iOS 工程由 Tauri CLI 生成。当前主机缺少 Android SDK/NDK，Android 工程按锁定的 [Tauri CLI 模板](https://github.com/tauri-apps/tauri/tree/9319e539f34237035cb4693bed9246660bc0a926/crates/tauri-cli/templates/mobile/android) 展开，保留官方 Gradle wrapper、Kotlin 桥接和本项目图标。在完整 SDK 环境可运行 `bun run tauri android init` 重新生成。
+- 本地原文件与数据库在同一书库下，整库 ZIP 的创建和展开会占用与备份大小相关的内存。字体与开源许可随应用打包，构建脚本从已安装的生产依赖中提取第三方许可清单。
 
 更新优化版 EPUB 引擎时，可执行 `node scripts/vendor-epub.mjs ../foliate-js`。脚本读取指定仓库 HEAD 的已提交文件，保存提交号到 `public/foliate/REVISION`。升级后应复测固定版式、长章节、选词、跳转及阅读位置恢复。
