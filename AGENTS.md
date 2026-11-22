@@ -1,37 +1,35 @@
-# Working on hearthread
+# 在 hearthread 仓库中开发
 
-English · [简体中文](AGENTS.zh-CN.md)
+本指南适用于整个仓库。hearthread 是基于 Tauri、React 和 TypeScript 的本地优先个人资料库。当前版本供单个本地读者阅读 EPUB、PDF 和 Markdown。图片管理和多人同步属于后续规划。
 
-This guide applies to the whole repository. hearthread is a local-first personal library built with Tauri, React and TypeScript. The current release reads EPUB, PDF and Markdown for a single local reader. Image collections and multi-user sync are planned.
+## 运行项目
 
-## Run the project
+在仓库根目录执行 `bun install --frozen-lockfile`，Bun 版本以 `package.json` 为准。运行 `bun run dev` 启动浏览器界面，或用 `bun run tauri dev` 启动原生应用。`bun run build` 会检查类型并构建前端。启动开发服务和构建时，脚本会生成运行时依赖的许可清单。各平台环境和构建命令见 [README 中文版](README.zh-CN.md)。
 
-From the repository root, run `bun install --frozen-lockfile`. Use the Bun version pinned in `package.json`. Start the browser UI with `bun run dev` or the native app with `bun run tauri dev`. Run `bun run build` to type-check and build the frontend. These scripts also generate the runtime license notices. Platform setup and build commands are in the [README](README.md).
+## 修改界面和阅读器
 
-## UI and reader changes
+- 视觉对照以 `docs/design/v0.1/index.html` 的交互稿为准。书墙在 `src/library/`，通用控件和设置在 `src/ui/`。从设计稿提取的 `public/design/edition.css` 作为静态文件加载。设计源稿变动后，用 `node scripts/design-assets.mjs` 重新提取资源。
+- 修改阅读器先看 `src/reader/Reader.tsx` 和同目录的 `engine.ts`。内置样章有独立的渲染路径。调整分页、搜索或续读时，导入对应格式的文件验证。
+- 遇到 EPUB 排版或性能问题，优先参考工作区同级目录中的优化版 `../foliate-js` 和 `../readest` 的阅读器实现。升级内置 EPUB 引擎时，运行 `node scripts/vendor-epub.mjs ../foliate-js`，检查生成的改动和 `public/foliate/REVISION` 中的提交号。
+- `src/reader/Pdf.tsx` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。只渲染当前页，换页时取消旧任务。Markdown 使用 `react-markdown`，禁用原始 HTML。
 
-- Use the interactive HTML in `docs/design/v0.1/index.html` as the visual reference. The shelf lives in `src/library/`, shared controls and settings in `src/ui/`. Keep the extracted stylesheet `public/design/edition.css` loaded as a static asset. Re-extract design assets with `node scripts/design-assets.mjs` when the source design changes.
-- Start reader changes in `src/reader/Reader.tsx` and `engine.ts` in the same directory. Sample chapters have a separate rendering path. Exercise the affected format with an imported file when changing pagination, search or resume.
-- For EPUB layout or performance issues, consult the optimized fork in the sibling checkout `../foliate-js` and reader implementations in `../readest` when available. To update the bundled EPUB engine, run `node scripts/vendor-epub.mjs ../foliate-js` and review the generated diff including `public/foliate/REVISION`.
-- In `src/reader/Pdf.tsx`, keep the PDF.js main module and worker on the same legacy build for WKWebView. Vite copies the fonts, CMaps and decoders for offline use. Keep rendering bounded to the active page and cancel stale render tasks. Markdown uses `react-markdown` with raw HTML disabled.
+## 存储和阅读位置
 
-## Storage and reading positions
+文件和书目操作统一走 `src/storage/files.ts` 中的 `LibraryFiles`。原生适配器调用 `src-tauri/src/store.rs` 中的 Rust 和 SQLite 实现，浏览器使用独立的 IndexedDB 书库。书目记录保存文件的 SHA-256 键。读取结束后，调用读取句柄的 `release()` 释放资源。
 
-Use `LibraryFiles` in `src/storage/files.ts` for file and catalog access. The native adapter uses Rust and SQLite in `src-tauri/src/store.rs`. Browser development uses a separate IndexedDB library. Persist SHA-256 object keys in records and call `release()` on a reading URL when finished.
+先写入不可变对象，再提交书目。把相关变更连同预期修订号放进同一批次，冲突时整批回滚。共享书目保存在 `books/<id>` 下，阅读位置和偏好保存在 `profiles/local/` 下。重新打开文件时，EPUB 按 CFI 恢复，PDF 按从 1 开始的页码恢复，Markdown 按相对滚动位置恢复。
 
-Write immutable objects before committing the catalog. Submit related changes together with their expected revisions so conflicts roll back the batch. Shared book metadata lives under `books/<id>`. Keep positions and preferences under `profiles/local/`. Preserve EPUB CFIs, one-based PDF pages and relative Markdown scroll positions across reloads.
+书库迁移使用 `src/storage/backup.ts` 定义的带版本号 ZIP 格式。恢复时先校验对象摘要，再提交记录。原生 SQLite 数据库及其活动 WAL 文件由本地进程管理。
 
-Use the versioned ZIP format in `src/storage/backup.ts` for transfers. Restore verifies object digests before committing records. The native SQLite database and its active WAL belong to the local process.
+## 验证改动
 
-## Verify the change
-
-| Change | Check from the repository root |
+| 改动 | 在仓库根目录运行 |
 | --- | --- |
-| Shelf, settings or reader layout | `bun run test:e2e tests/design.spec.ts` compares the app with the HTML reference at desktop and phone sizes. Inspect the application, reference and difference images in `test-results/`. |
-| Import, reading, library management or backup | `bun run test:e2e` tests the production frontend in an isolated `.qa-dist` build. |
-| Native storage or revision handling | `bun run test:native` exercises chunked writes, deduplication, rollback and reopening the catalog. |
-| Native asset URLs, PDF worker or reader persistence | On macOS, run `bun run test:webview` in a desktop session. It uses a separate test library. |
+| 书墙、设置或阅读页布局 | `bun run test:e2e tests/design.spec.ts` 在桌面和手机尺寸下与 HTML 原稿对照。应用截图、原稿截图和差异图保存在 `test-results/`。 |
+| 导入、阅读、书库管理或备份 | `bun run test:e2e` 在独立的 `.qa-dist` 生产构建上执行浏览器测试。 |
+| 原生存储或修订冲突处理 | `bun run test:native` 验证分块写入、去重、回滚和重新打开书库。 |
+| 原生资源地址、PDF Worker 或阅读位置持久化 | 在 macOS 桌面会话中运行 `bun run test:webview`，它使用独立的测试书库。 |
 
-Playwright uses installed Chrome by default. For bundled Chromium, run `bunx playwright install chromium` and set `PLAYWRIGHT_CHANNEL=chromium`. Optional personal-library tests accept local paths through `HEARTHREAD_TEST_EPUB` (at least six contents entries) and `HEARTHREAD_TEST_PDF` (at least ten pages). Keep personal books outside the repository.
+Playwright 默认使用已安装的 Chrome。使用自带 Chromium 时，先运行 `bunx playwright install chromium`，再设置 `PLAYWRIGHT_CHANNEL=chromium`。可选的个人书库用例通过环境变量读取本地路径。`HEARTHREAD_TEST_EPUB` 对应的书至少需要六个目录项，`HEARTHREAD_TEST_PDF` 对应的文件至少需要十页。个人书籍放在仓库之外。
 
-Record changes to architecture, dependencies and platform workarounds in the [architecture notes](docs/architecture.md). Record the actual platform and task when updating [verification results](docs/verification/README.md).
+调整架构、依赖或平台兼容方案时，更新[架构笔记](docs/architecture.md)。更新验收记录时，写明实际验证的平台和操作。[验收记录](docs/verification/README.md)

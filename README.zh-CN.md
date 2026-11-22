@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-hearthread 是一个本地优先的跨平台个人资料库，从沉浸式阅读做起。现在，你可以把 EPUB 电子书、PDF 和 Markdown 文档放进同一面书墙，离线阅读，下次打开时接着上次的位置读。后续会逐步加入图片管理，让书籍、文档和图片都能在同一处整理。
+hearthread 是一个本地优先的跨平台个人资料库，从沉浸式阅读出发，逐步支持书籍、文档与图片的统一管理。
 
 ![书墙上的十二本样书，底部阅读栏显示当前选中的书](docs/verification/library-desktop.png)
 
@@ -10,10 +10,10 @@ hearthread 是一个本地优先的跨平台个人资料库，从沉浸式阅读
 
 ## 主要功能
 
-- 在书墙上按封面找书，也可以切换到列表。打开导入面板，拖入文件并确认，按书名或作者搜索，还可以一次把多本书移入同一分类。
-- 双击封面开始阅读，轻点正文唤出工具。可以调整字体、行距和纸色，也可以直接搜索书中的一段话。
-- EPUB 支持重排和章节跳转，PDF 可以适应整页或屏幕宽度，Markdown 保留表格和代码块。重新打开文件会回到上次读到的位置。
-- 可以单独导出原文件，也可以把整个书库连同阅读位置和偏好备份成 ZIP。换设备时，恢复这份备份即可继续阅读。
+- **统一资料管理**。EPUB 书籍、PDF 和 Markdown 文档可以在同一书库里分类、查找，后续还将支持图片管理。
+- **沉浸式阅读**。轻点正文收起工具，按自己的习惯调整字体和行距。下次打开，接着上次读到的地方继续。
+- **跨端使用**。面向 macOS、Windows、iOS 和 Android。换设备时，可以通过书库备份一并迁移原文件和阅读位置。
+- **高效渲染**。EPUB 按需加载章节，PDF 只绘制当前页。连续翻页时会取消上一页未完成的绘制。
 
 ## 本地开发
 
@@ -34,5 +34,3 @@ bun run tauri dev
 | Windows 桌面应用 | `bun run tauri build` |
 | Apple Silicon 上的 iOS 模拟器 | `bun run tauri ios build --debug --target aarch64-sim` |
 | Android arm64 调试版 APK | `bun run tauri android build --debug --apk --target aarch64` |
-
-当前界面使用简体中文。macOS 构建已经过本地验证，仓库也提供了 Windows、iOS 和 Android 的工程配置。[各平台验收记录](docs/verification/README.md)
