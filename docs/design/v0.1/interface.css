@@ -1,5 +1,6 @@
 /* Most actions update data immediately. Motion identifies the source of a layer. */
 :root {
+  --hover-tint:7%;
   --press-time:100ms;
   --popover-time:150ms;
   --dialog-time:200ms;
@@ -9,7 +10,7 @@
 [data-action=toggle-nav][aria-expanded=true] .sidebar-pane {fill:currentColor}
 .ui-glyph[data-symbol=more] {fill:currentColor;stroke-width:1}
 .pdf-fit .ui-glyph {width:16px;height:16px}
-.chapter-position input {min-height:24px}
+.chapter-position [data-slot=slider] {min-height:24px}
 .studio-search input {height:100%;min-width:0}
 .studio-search input::-webkit-search-cancel-button {display:none}
 ::selection {background:rgba(114,157,190,.27);color:currentColor}
@@ -64,9 +65,9 @@ body:has(.reading-dock) .toast {bottom:calc(max(18px,env(safe-area-inset-bottom)
   .studio-topbar .icon-button,.studio-topbar .import-button,.list-view [data-book-menu],.drawer-close,.room-panel .icon-button,.modal .icon-button {min-width:44px;min-height:44px}
   .studio-search {min-height:44px}
   .view-switch button {min-height:38px}
-  .pref-action,.type-slider input {min-height:32px}
+  .pref-action,.type-slider [data-slot=slider] {min-height:32px}
   .chapter-position {min-height:44px;align-content:center;gap:0}
-  .chapter-position input {height:28px}
+  .chapter-position [data-slot=slider] {height:28px}
 }
 @media(prefers-reduced-motion:reduce) {
   .library-popup,.room-panel,.modal,.toast,.room-head,.room-dock {scale:1!important;translate:none!important}
@@ -100,10 +101,9 @@ html[data-input=keyboard] *,html[data-input=keyboard] *::before,html[data-input=
 }
 .wall-select {scroll-margin-block:1rem 7rem}
 .list-view tbody tr {cursor:pointer}
-.list-view tbody tr:focus-within {background:var(--color-paper-2)}
+html[data-input=keyboard] .list-view tbody tr:has(:focus-visible) {background:var(--color-paper-2)}
 @media(hover:hover) and (pointer:fine) {
-  .list-view tbody tr:hover {background:var(--color-paper-2)}
-  .contents-list button:hover,.pref-action:hover,.selection-bar button:not(:disabled,.finish-selection):hover {color:var(--color-ink)}
+  html:not([data-input=keyboard]) .list-view tbody tr:hover {background:var(--color-paper-2)}
 }
 .heading-name>span,.wall-meta,.list-view .num,.queue-status,.match-count {font-variant-numeric:tabular-nums}
 
@@ -113,16 +113,39 @@ html[data-input=keyboard] *,html[data-input=keyboard] *::before,html[data-input=
 .destination .field-trigger {margin-inline-start:auto}
 .reading-room .field-trigger {color:var(--reader-ink)}
 .reading-room .field-trigger[aria-expanded=true] {background:var(--room-control)}
-@media (hover:hover) and (pointer:fine) {
-  .reading-room .field-trigger:hover {background:var(--room-control)}
-}
+
 .reading-room .library-popup {background:var(--reader-paper);border-color:var(--room-line);color:var(--reader-ink)}
-.reading-room .library-popup button:focus-visible {background:var(--room-control)}
-@media (hover:hover) and (pointer:fine) {
-  .reading-room .library-popup button:hover {background:var(--room-control)}
-}
+
 .reading-room .library-popup [aria-checked=true] svg {color:var(--room-accent)}
 @media(max-width:600px){
  .mobile-preference {padding:0;background:transparent}
  .mobile-preference .field-trigger {max-width:100%;width:max-content;gap:8px}
 }
+
+/* Tint the control's resting surface. Selection, focus and open-panel
+   indicators remain independent of the pointer's hit area. */
+.studio-nav {--hover-surface:var(--sidebar-material)}
+.reading-room {--hover-surface:var(--reader-paper)}
+.view-switch,.import-button,.manage-library,.pref-action,.pref-rows .key,.reset-reading,
+.preferences-nav [aria-current=page],.contents-list [aria-current],button[aria-expanded=true] {--hover-surface:var(--color-paper-2)}
+.view-switch .active {--hover-surface:var(--selected-nav)}
+.studio-brand {border-radius:9px}
+@media (hover:hover) and (pointer:fine) {
+  .studio-nav .nav-item:enabled:hover {
+    background:color-mix(in srgb,var(--selected-nav) 85%,var(--sidebar-material))
+  }
+  :is(.view-switch button,.icon-button,.button:not(.primary),
+      .tool-trigger,.selection-bar button:not(.finish-selection),.preferences-nav button,
+      .paper-choice,.pref-action,.pref-rows button.key,.room-tool,.room-back,.pdf-fit,.reset-reading,
+      .contents-list button,.passage-match):enabled:hover {
+    background:color-mix(in srgb,var(--color-ink) var(--hover-tint),var(--hover-surface,var(--solid-material)))
+  }
+  .dock-controls .read-button:enabled:hover,.selection-bar .finish-selection:enabled:hover,
+  .button.primary:enabled:hover {background:color-mix(in srgb,var(--color-paper) var(--hover-tint),var(--color-ink));opacity:1}
+  .library-dialog .modal-actions .destructive:enabled:hover {background:color-mix(in srgb,var(--danger-text) var(--hover-tint),var(--danger-fill))}
+  .toast button:enabled:hover {background:color-mix(in srgb,currentColor var(--hover-tint),transparent)}
+  html:not([data-input=keyboard]) .library-popup button:hover {background:var(--menu-highlight)}
+}
+.library-popup {--menu-highlight:color-mix(in srgb,var(--color-ink) var(--hover-tint),var(--hover-surface,var(--solid-material)))}
+html[data-input=keyboard] .library-popup button:focus {background:var(--menu-highlight)}
+html[data-input=pointer] .library-popup button:focus {outline:none}

@@ -83,12 +83,16 @@ test("EPUB repagination, contents and CFI resume", async ({ page }) => {
     .locator(".contents-list button")
     .filter({ hasText: "湖畔的四季" })
     .click();
-  await expect(page.locator(".chapter-position span")).toContainText("第 4 章");
+  await expect(page.locator(".chapter-position")).toContainText("第 4 章");
+  const chapter = page.getByRole("slider", { name: "选择章节" });
+  await chapter.press("ArrowLeft");
+  await expect(chapter).toHaveAttribute("aria-valuenow", "3");
+
   await page.getByRole("button", { name: "返回书库" }).click();
   await expect(page.locator(".reading-layer")).toHaveCount(0);
   await page.reload();
   await page.locator('[data-focus-book="' + id + '"]').dblclick();
-  await expect(page.locator(".chapter-position span")).toContainText("第 4 章");
+  await expect(page.locator(".chapter-position")).toContainText("第 3 章");
 });
 test("PDF opens original page, text layer and page search", async ({
   page,

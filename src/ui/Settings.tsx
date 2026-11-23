@@ -16,6 +16,7 @@ import {
   TypeControls,
   typeStyle,
 } from "./controls";
+import { Switch } from "./switch";
 import type { Catalog } from "../model";
 import { patchPrefs } from "../storage/catalog";
 import { files } from "../storage/files";
@@ -80,7 +81,7 @@ export function Settings({
     [path, setPath] = useState(""),
     [licenses, setLicenses] = useState(""),
     [busy, setBusy] = useState(false);
-  const { drawer, scrim, dismiss, handle } = useSheet(close, data.prefs.reduce);
+  const { drawer, scrim, dismiss, handle } = useSheet(close);
   const restore = useRef<HTMLInputElement>(null),
     font = useRef<HTMLInputElement>(null);
   const p = data.prefs,
@@ -99,7 +100,7 @@ export function Settings({
       if (e.key === "Tab") {
         const all = [
           ...drawer.current!.querySelectorAll<HTMLButtonElement>(
-            "button:enabled,input:not([hidden])",
+            'button:enabled,input:not([hidden]),[role=slider][tabindex="0"]',
           ),
         ].filter((n) => n.offsetWidth);
         if (e.shiftKey && document.activeElement === all[0]) {
@@ -119,17 +120,6 @@ export function Settings({
       <button className="pref-action" disabled={busy} onClick={fn}>
         {label}
       </button>
-    );
-  }
-  function toggle(key: "system" | "reduce", label: string) {
-    return (
-      <button
-        role="switch"
-        className="switch"
-        aria-label={label}
-        aria-checked={p[key]}
-        onClick={() => void patchPrefs({ [key]: !p[key] })}
-      />
     );
   }
   async function transfer(job: () => Promise<unknown>, message: string) {
@@ -232,10 +222,11 @@ export function Settings({
                   />
                   <Group title="显示">
                     <Row name="跟随系统外观">
-                      {toggle("system", "跟随系统外观")}
-                    </Row>
-                    <Row name="减少动态效果">
-                      {toggle("reduce", "减少动态效果")}
+                      <Switch
+                        aria-label="跟随系统外观"
+                        checked={p.system}
+                        onCheckedChange={(system) => void patchPrefs({ system })}
+                      />
                     </Row>
                   </Group>
                   <Group>

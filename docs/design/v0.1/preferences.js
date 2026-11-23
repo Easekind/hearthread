@@ -1,11 +1,11 @@
 const preferenceIcons={appearance:'sun',reading:'book',language:'language',storage:'storage',shortcuts:'keyboard',about:'info'};
 function preferencesContent() {
   const button=(action,label)=>`<button class="pref-action" data-action="${action}">${label}</button>`;
-  const toggle=(action,label,checked)=>`<button class="switch" role="switch" data-action="${action}" aria-label="${label}" aria-checked="${checked}"></button>`;
+  const toggle=(action,label,checked)=>`<button data-slot="switch" role="switch" data-action="${action}" aria-label="${label}" aria-checked="${checked}"><span data-slot="switch-thumb"></span></button>`;
   const group=(heading,body)=>`<section class="pref-group">${heading?`<h3>${heading}</h3>`:''}<div class="pref-rows">${body}</div></section>`;
   if (settingTab==='appearance') return `<div class="appearance-preview" aria-label="当前主题的书库预览"><div class="mini-window"><div class="mini-rail">${icon('library')}</div><div class="mini-library"><strong>我的书库</strong><div class="mini-shelf">${originalBooks.slice(0,3).map(b=>`<div>${cover(b)}</div>`).join('')}</div></div></div></div>
     <div class="paper-choices">${paperChoices(shellTheme,'theme')}</div>
-    ${group('显示',settingRow('跟随系统外观','',toggle('system-theme','跟随系统外观',followSystem))+settingRow('减少动态效果','',toggle('reduce-motion','减少动态效果',reduceEffects)))}
+    ${group('显示',settingRow('跟随系统外观','',toggle('system-theme','跟随系统外观',followSystem)))}
     ${group('',settingRow('自定义主题','',button('custom-theme','添加主题')))}`;
   if (settingTab==='reading') return `<article class="type-specimen" style="--reading-face:${readerFonts()};--reader-size:${fontSize}px;--reader-leading:${leading}"><small>排版预览</small><p>清晨的湖面映着树影。<br>沿着岸边，再读一页。</p><p lang="en">Morning light on the water.</p></article>
     ${group('正文',fontControls(true))}${group('',settingRow('自定义字体','OTF、TTF、WOFF2',button('custom-font','导入字体')))}`;

@@ -5,7 +5,7 @@
   button,.sheet-grab { -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent }
   .studio-search input,.room-search input,.dialog-field .field-input {font-size:max(16px,1rem)}
   .room-search input,.studio-search {min-width:0}
-  .paper-choice,.reset-reading,.pref-action,.library-dialog .modal-actions button,.type-slider input {min-height:44px}
+  .paper-choice,.reset-reading,.pref-action,.library-dialog .modal-actions button,.type-slider [data-slot=slider] {min-height:44px}
   .library-popup,.modal,.file-review ul {overscroll-behavior:contain}
   html:has(.studio.nav-open,.modal-backdrop:not([inert])) {overflow:hidden}
   .view-switch button {min-height:44px}

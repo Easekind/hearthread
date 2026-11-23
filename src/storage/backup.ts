@@ -53,7 +53,6 @@ const schema = z.object({
     chinese: font,
     latin: font,
     system: z.boolean(),
-    reduce: z.boolean(),
     view: z.enum(["grid", "list"]),
     sort: z.enum(["recent", "added", "title"]),
     customFont: digest.optional(),

@@ -8,13 +8,17 @@ function replace(original, replacement) {
 replace('<title>hearthread v0.8 / Modern Library</title>', '<title>hearthread · 书库 v0.1</title>');
 replace("shellTheme='dark'", "shellTheme='light'");
 // Keep the inherited button interactions exclusive to actionable controls.
-replace('button:hover{background:var(--color-paper-2)}', 'button:where(:enabled):hover{background:var(--color-paper-2)}');
+replace('button:hover{background:var(--color-paper-2)}', '');
+// Button hover colors must match the pointer on the first frame.
+replace('button,input,select{transition:background-color', 'input,select{transition:background-color');
+html = html.replaceAll('.wall-item:hover .wall-object', '.wall-select:hover .wall-object');
 html = html.replaceAll('button:active{transform:translateY(1px)}', 'button:where(:enabled):active{transform:translateY(1px)}');
 html = html.replaceAll('.button.primary:hover{', '.button.primary:where(:enabled):hover{');
 // The archived sheet's hover rules contain only hover selectors. Keep their
 // source order and surrounding breakpoints while restricting them to a mouse.
 const legacyStyle=html.slice(html.indexOf('<style>')+7,html.indexOf('</style>'));
-const editionStyle = legacyStyle.replace(/\/\*[\s\S]*?\*\//g,
+// Photo placeholders and shadcn controls both use data-slot.
+const editionStyle = legacyStyle.replace('[data-slot] {', '[data-slot]:has(> img) {').replace(/\/\*[\s\S]*?\*\//g,
   comment => comment.replace(/\bv0\.\d+\b/g, 'v0.1'));
 replace(legacyStyle,editionStyle.replace(/(?<=[{}\n])([^{}\n]*:hover[^{}\n]*)\{([^{}]*)\}/g,
   '@media (hover:hover) and (pointer:fine){$1{$2}}'));
@@ -107,6 +111,9 @@ const dock=html.slice(dockStart,dockEnd);
 replace(dock,'${readingDock(b)}');
 replace('function spatialShelf(', 'function readingDock(b){return `'+dock+'`}\nfunction spatialShelf(');
 replace("const layer=document.querySelector('.layer-scroll');if(layer)layer.scrollTop=y;", "const layer=document.querySelector('.layer-scroll');if(layer)layer.scrollTop=y;syncBrowserChrome();");
+replace(',reduceEffects=false', '');
+replace("||!!document.querySelector('#reduced-preview')", '');
+html = html.replace(/,'reduce-motion':.*?(?=,'library-location':)/, '');
 replace('const motionPreference=()=>matchMedia', "const motionPreference=()=>document.documentElement.dataset.input==='keyboard'||matchMedia");
 replace('const duration=opening?740:430','const duration=opening?280:240');
 replace("const to=target.querySelector('.book-cover')?.getBoundingClientRect()||target.getBoundingClientRect()", "const coverTarget=target.querySelector('.book-cover')||target.closest('.title-cell')?.querySelector('.book-cover');const to=coverTarget?.getBoundingClientRect()||target.getBoundingClientRect()");

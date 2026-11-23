@@ -118,7 +118,6 @@ export default function App() {
       document.body.className = [
         t === "light" ? "" : "theme-" + t,
         layer ? "has-library-layer" : "",
-        p.reduce ? "reduce-motion" : "",
       ].join(" ");
       document.body.style.setProperty("--brand-thread", p.tint ?? "");
       document
@@ -158,7 +157,6 @@ export default function App() {
   }, [query]);
   function open(b: Book) {
     if (
-      !data.prefs.reduce &&
       document.documentElement.dataset.input !== "keyboard" &&
       !matchMedia("(prefers-reduced-motion:reduce)").matches
     ) {
@@ -185,7 +183,6 @@ export default function App() {
   }
   useEffect(() => {
     function key(e: KeyboardEvent) {
-      document.documentElement.dataset.input = "keyboard";
       if (layer || dialog || e.isComposing) return;
       if (
         (e.ctrlKey || e.metaKey) &&
@@ -200,8 +197,12 @@ export default function App() {
         if (document.activeElement === search.current) setQuery("");
       }
     }
+    const markKeyboard = () => {
+      document.documentElement.dataset.input = "keyboard";
+    };
     const pointer = () => {
-      document.documentElement.dataset.input = "pointer";
+      if (document.documentElement.dataset.input !== "pointer")
+        document.documentElement.dataset.input = "pointer";
     };
     const error = (e: PromiseRejectionEvent) => {
       notify(String(e.reason));
@@ -209,12 +210,16 @@ export default function App() {
     };
     const storage = (e: Event) => notify((e as CustomEvent).detail);
     window.addEventListener("keydown", key);
-    window.addEventListener("pointerdown", pointer);
+    window.addEventListener("keydown", markKeyboard, true);
+    window.addEventListener("pointerdown", pointer, true);
+    window.addEventListener("pointermove", pointer, true);
     window.addEventListener("unhandledrejection", error);
     window.addEventListener("storage-error", storage);
     return () => {
       window.removeEventListener("keydown", key);
-      window.removeEventListener("pointerdown", pointer);
+      window.removeEventListener("keydown", markKeyboard, true);
+      window.removeEventListener("pointerdown", pointer, true);
+      window.removeEventListener("pointermove", pointer, true);
       window.removeEventListener("unhandledrejection", error);
       window.removeEventListener("storage-error", storage);
     };

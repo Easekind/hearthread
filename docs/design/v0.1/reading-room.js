@@ -9,7 +9,7 @@ function rangeFill(value,min,max) {
   return (value-min)/(max-min)*100+'%';
 }
 function readingRange(id,label,min,max,step,value) {
-  return `<input type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" style="--range-fill:${rangeFill(value,min,max)}">`;
+  return `<input data-slot="slider" type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" style="--range-fill:${rangeFill(value,min,max)}">`;
 }
 function fontControls(includeLatin) {
   function face(label,id,value) {

@@ -44,7 +44,11 @@ drawerViewport.addEventListener('change',()=>{
 const platformModifier=/Mac|iPhone|iPad/.test(navigator.platform)?'⌘':'Ctrl';
 const root=document.documentElement;
 document.addEventListener('keydown',()=>{root.dataset.input='keyboard'},true);
-document.addEventListener('pointerdown',()=>{root.dataset.input='pointer'},true);
+function usePointer() {
+  if (root.dataset.input!=='pointer') root.dataset.input='pointer';
+}
+document.addEventListener('pointerdown',usePointer,true);
+document.addEventListener('pointermove',usePointer,true);
 
 // Retire only this instance. A newly opened surface can replace it immediately.
 function retireSurface(node) {

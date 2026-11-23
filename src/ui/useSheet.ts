@@ -1,10 +1,10 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 /** The same spring drives the drawer entrance, touch drag and dismissal. */
-export function useSheet(close: () => void, reduce: boolean) {
+export function useSheet(close: () => void) {
   const drawer = useRef<HTMLElement>(null),
     scrim = useRef<HTMLDivElement>(null),
-    current = useRef({ close, reduce });
-  current.current = { close, reduce };
+    onClose = useRef(close);
+  onClose.current = close;
   const motion = useRef({ position: 0, velocity: 0, frame: 0 }),
     drag = useRef<{
       start: number;
@@ -27,7 +27,6 @@ export function useSheet(close: () => void, reduce: boolean) {
       );
   }
   const reduced = () =>
-    current.current.reduce ||
     document.documentElement.dataset.input === "keyboard" ||
     matchMedia("(prefers-reduced-motion:reduce)").matches;
   function settle(target: number) {
@@ -36,7 +35,7 @@ export function useSheet(close: () => void, reduce: boolean) {
     if (reduced()) {
       state.position = target;
       paint();
-      if (target) current.current.close();
+      if (target) onClose.current();
       return;
     }
     let previous = performance.now();
@@ -57,7 +56,7 @@ export function useSheet(close: () => void, reduce: boolean) {
         state.position = target;
         state.velocity = 0;
         paint();
-        if (target) current.current.close();
+        if (target) onClose.current();
         return;
       }
       paint();
