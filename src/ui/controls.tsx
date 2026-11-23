@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
   type ReactNode,
   type CSSProperties,
@@ -7,6 +8,7 @@ import {
 } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Slider } from "./slider";
 export { Button } from "./button";
 import icons from "./icons.json";
 import { files } from "../storage/files";
@@ -146,10 +148,22 @@ export function Menu({
   trigger: ReactNode;
   options: Option[];
 }) {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
   return (
-    <Dropdown.Root modal={false}>
-      <Dropdown.Trigger asChild>{trigger}</Dropdown.Trigger>
-      <Dropdown.Portal>
+    <Dropdown.Root
+      modal={false}
+      onOpenChange={(open) => {
+        if (open)
+          setContainer(
+            anchor.current?.closest<HTMLElement>(".reading-room") ?? null,
+          );
+      }}
+    >
+      <Dropdown.Trigger ref={anchor} asChild>
+        {trigger}
+      </Dropdown.Trigger>
+      <Dropdown.Portal container={container}>
         <Dropdown.Content
           className="menu library-popup"
           aria-label={label}
@@ -283,39 +297,6 @@ export function Papers({
     </div>
   );
 }
-export function Range({
-  label,
-  value,
-  min,
-  max,
-  step = 1,
-  change,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  change: (n: number) => void;
-}) {
-  return (
-    <input
-      type="range"
-      aria-label={label}
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      style={
-        {
-          "--range-fill":
-            (max > min ? ((value - min) / (max - min)) * 100 : 0) + "%",
-        } as CSSProperties
-      }
-      onChange={(e) => change(e.target.valueAsNumber)}
-    />
-  );
-}
 export function TypeControls({
   prefs,
   change,
@@ -363,16 +344,16 @@ export function TypeControls({
           },
         ] as const
       ).map((v) => (
-        <label className="type-slider" key={v.key}>
+        <div className="type-slider" key={v.key}>
           {v.label}
           <output>{prefs[v.key] + v.unit}</output>
-          <Range
-            label={v.label}
-            value={prefs[v.key]}
+          <Slider
+            aria-label={v.label}
+            value={[prefs[v.key]]}
             {...{ min: v.min, max: v.max, step: v.step }}
-            change={(n) => change({ [v.key]: n })}
+            onValueChange={([n]) => change({ [v.key]: n })}
           />
-        </label>
+        </div>
       ))}
     </div>
   );

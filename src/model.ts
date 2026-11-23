@@ -28,7 +28,6 @@ export interface Preferences {
   chinese: string;
   latin: string;
   system: boolean;
-  reduce: boolean;
   view: "grid" | "list";
   sort: "recent" | "added" | "title";
   customFont?: string;
@@ -47,7 +46,6 @@ export const defaults: Preferences = {
   chinese: "serif",
   latin: "serif",
   system: false,
-  reduce: false,
   view: "grid",
   sort: "recent",
 };

@@ -78,3 +78,32 @@ test("mobile settings and saved appearance", async ({ page }) => {
   await expect(page.locator("body")).toHaveClass(/theme-dark/);
   await expect(page.locator(".reading-dock")).toBeVisible();
 });
+test("system appearance and typography sliders persist between surfaces", async ({
+  page,
+}) => {
+  await page.goto("/#settings");
+  const system = page.getByRole("switch", { name: "跟随系统外观" });
+  await system.press("Space");
+  await expect(system).toBeChecked();
+  await page.reload();
+  await expect(system).toBeChecked();
+  await page.getByRole("button", { name: "阅读排版", exact: true }).click();
+  const size = page.getByRole("slider", { name: "字号" });
+  const leading = page.getByRole("slider", { name: "行距" });
+  await size.press("End");
+  await expect(size).toHaveAttribute("aria-valuenow", "30");
+  await leading.press("ArrowRight");
+  await expect(leading).toHaveAttribute("aria-valuenow", "2");
+
+  await page.goto("/#read-1");
+  await page.locator(".reading-layer").focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("button", { name: "阅读排版", exact: true }).click();
+  await expect(size).toHaveAttribute("aria-valuenow", "30");
+  await expect(leading).toHaveAttribute("aria-valuenow", "2");
+  const chapter = page.getByRole("slider", { name: "选择章节" });
+  const initialChapter = await chapter.getAttribute("aria-valuenow");
+  await size.press("ArrowLeft");
+  await expect(size).toHaveAttribute("aria-valuenow", "29");
+  await expect(chapter).toHaveAttribute("aria-valuenow", initialChapter!);
+});

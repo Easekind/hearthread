@@ -9,7 +9,7 @@
 | [本地优化版 foliate-js](https://github.com/readest/foliate-js/tree/fd05acdeb0a1dc16752d252bbb4bf6971e175450) | 复用分章加载、排版分页、长章节切分、固定版式及搜索接口 | `public/foliate` 固定该提交的 EPUB 运行时子集。应用只走 EPUB 路径。固定版式使用现代 WebView 自带的可构造样式表 |
 | [Mozilla PDF.js 示例](https://mozilla.github.io/pdf.js/examples/) 与 [Readest 的 PDF Worker 配置](https://github.com/readest/readest/blob/4bd787e274def5cc648422045e0e9f46b6038989/apps/readest-app/src/libs/document.ts) | 独立解析 Worker、按页取 viewport、控制 canvas 尺寸；资源地址按应用来源解析 | 只挂载当前页，高 DPI 绘制有像素预算。并行生成可选文字层，换页取消旧任务，关闭时销毁 loading task |
 | [react-markdown](https://github.com/remarkjs/react-markdown) 与 [remark-gfm](https://github.com/remarkjs/remark-gfm) | 语法树生成 React 元素，GFM 扩展表格等语法 | 读取独立文档，跳过原始 HTML；锚点在阅读层定位，用户点击外链后交由平台打开 |
-| [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog) | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互 | Button 变体、菜单和对话框采用设计稿样式。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
+| [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog) | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互 | Button、Switch 和 Slider 在 `src/ui/` 中维护。外观开关、排版滑动条与 EPUB 章节滑动条复用设计稿样式，分别由 Radix Switch 和 Slider 处理输入。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
 | [rusqlite](https://github.com/rusqlite/rusqlite) | 在 Rust 层使用随应用打包的 SQLite | 参数化 SQL、WAL、FULL 同步、每批变更使用一个事务 |
 
 Bun 和 Cargo 分别通过 `bun.lock` 和 `Cargo.lock` 锁定依赖版本。Bun 版本在 `package.json` 的 `packageManager` 中指定，CI 按此版本执行冻结安装。项目级 `.npmrc` 指定公共注册表，保证本地和 CI 使用同一依赖来源。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。

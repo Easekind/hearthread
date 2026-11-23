@@ -10,14 +10,8 @@ import type { Book, Preferences } from "../model";
 import { defaults } from "../model";
 import { EngineBoundary } from "./EngineBoundary";
 import { bookSource, patchBooks, patchPrefs } from "../storage/catalog";
-import {
-  Icon,
-  Papers,
-  Range,
-  Tool,
-  TypeControls,
-  typeStyle,
-} from "../ui/controls";
+import { Icon, Papers, Tool, TypeControls, typeStyle } from "../ui/controls";
+import { Slider } from "../ui/slider";
 import type { Destination, Position, ReaderEngine } from "./engine";
 const Epub = lazy(() => import("./Epub")),
   Pdf = lazy(() => import("./Pdf")),
@@ -90,7 +84,6 @@ export default function Reader({
   useLayoutEffect(() => {
     layer.current?.focus({ preventScroll: true });
     if (
-      !prefs.reduce &&
       !matchMedia("(prefers-reduced-motion:reduce)").matches &&
       document.documentElement.dataset.input !== "keyboard"
     )
@@ -144,7 +137,11 @@ export default function Reader({
         else void leave();
         return;
       }
-      if ((e.target as Element)?.closest?.("input,select,textarea,button,a"))
+      if (
+        (e.target as Element)?.closest?.(
+          "input,select,textarea,button,a,[role=slider]",
+        )
+      )
         return;
       if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
         e.preventDefault();
@@ -292,6 +289,7 @@ export default function Reader({
           <Tool
             className="room-tool"
             label="目录"
+            aria-expanded={panel === "toc"}
             symbol="contents"
             onClick={() => selectPanel("toc")}
           />
@@ -305,18 +303,20 @@ export default function Reader({
               />
             )}
             {epub ? (
-              <label className="chapter-position">
+              <div className="chapter-position">
                 <span>
                   第 {index + 1} 章 <i>/ {count}</i>
                 </span>
-                <Range
-                  label="选择章节"
-                  value={index + 1}
-                  min={1}
-                  max={Math.max(1, count)}
-                  change={(n) => go(n - 1)}
-                />
-              </label>
+                {count > 1 && (
+                  <Slider
+                    aria-label="选择章节"
+                    value={[index + 1]}
+                    min={1}
+                    max={count}
+                    onValueChange={([chapter]) => go(chapter - 1)}
+                  />
+                )}
+              </div>
             ) : pdf ? (
               <button
                 className="pdf-fit"
@@ -343,6 +343,7 @@ export default function Reader({
           <Tool
             className="room-tool"
             label={pdf ? "切换明暗主题" : "阅读排版"}
+            aria-expanded={pdf ? undefined : panel === "type"}
             symbol={pdf ? (prefs.paper === "dark" ? "sun" : "moon") : "type"}
             onClick={() =>
               pdf
