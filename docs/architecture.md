@@ -32,7 +32,7 @@ library/
 
 ## 界面来源与维护
 
-视觉依据是 `docs/design/v0.1/index.html` 的最终交互稿。原稿内部标有 v0.9，且重建脚本引用工作区未提供的上一版。应用从完整 HTML 提取实际字体、封面艺术、印刷图形、图标与层叠样式。运行 `node scripts/design-assets.mjs` 可重建这些资源与原创 EPUB、Markdown 样章；`node scripts/sample-pdf.mjs` 生成可导出的 PDF 样张。
+视觉依据是 `docs/design/v0.1/index.html` 的最终交互稿。重建脚本引用工作区未提供的上一版原稿。应用从完整 HTML 提取实际字体、封面艺术、印刷图形、图标与层叠样式。运行 `node scripts/design-assets.mjs` 可重建这些资源与原创 EPUB、Markdown 样章；`node scripts/sample-pdf.mjs` 生成可导出的 PDF 样张。
 
 React 组件控制真实交互与持久化。原稿 CSS 作为独立静态资源加载，避免构建器重新计算颜色和子像素值。Tailwind 用于额外操作界面，保留设计稿的默认样式。PDF、Markdown、设置和统计图表使用动态导入。书内内容只进入对应渲染器。EPUB 章节带独立内容安全策略；HTML 事件属性和活动内容在创建阅读文档前移除。
 

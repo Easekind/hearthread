@@ -15,7 +15,7 @@ function preferencesContent() {
     const mod=/Mac|iPhone|iPad/.test(navigator.platform)?'⌘':'Ctrl';
     return group('键盘操作',[['搜索书库',mod+' K'],['导入书籍',mod+' O'],['书内搜索',mod+' F'],['切换章节','← / →'],['关闭面板','Esc']].map(([name,key])=>settingRow(name,'',`<button class="key" data-shortcut="${name}">${key}</button>`)).join(''));
   }
-  return `<div class="product-signature"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 4 15 10V19L25 13V4L35 10V36L25 30V21L15 27V36L5 30Z"/></svg><strong>hearthread</strong><small>交互设计预览 · v0.9</small></div>`+
+  return `<div class="product-signature"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 4 15 10V19L25 13V4L35 10V36L25 30V21L15 27V36L5 30Z"/></svg><strong>hearthread</strong><small>交互设计预览 · v0.1</small></div>`+
     group('',settingRow('应用更新','',button('check-update','检查更新'))+settingRow('开源项目与字体','',button('licenses','查看许可')));
 }
 function settings() {

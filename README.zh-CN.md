@@ -2,7 +2,7 @@
 
 [English](README.md) · 简体中文
 
-hearthread 是一个本地优先的跨平台个人资料库，从沉浸式阅读出发，逐步支持书籍、文档与图片的统一管理。
+Hearthread 是优先本地存储、跨端可用的个人资料库，以沉浸式阅读为起点，逐步汇聚图书、文档与图片。
 
 ![书墙上的十二本样书，底部阅读栏显示当前选中的书](docs/verification/library-desktop.png)
 
