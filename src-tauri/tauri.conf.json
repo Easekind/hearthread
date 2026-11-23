@@ -26,9 +26,7 @@
       "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' blob:; img-src 'self' asset: http://asset.localhost blob: data:; font-src 'self' asset: http://asset.localhost blob: data:; media-src 'self' blob:; frame-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost asset: http://asset.localhost blob: data:; object-src 'none'; base-uri 'none'",
       "assetProtocol": {
         "enable": true,
-        "scope": [
-          "$APPDATA/library/objects/*"
-        ]
+        "scope": ["$APPDATA/library/objects/*"]
       }
     }
   },

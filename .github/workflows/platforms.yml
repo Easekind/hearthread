@@ -8,10 +8,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { runner: windows-latest, platform: windows, target: x86_64-pc-windows-msvc }
-          - { runner: macos-latest, platform: macos, target: aarch64-apple-darwin }
-          - { runner: macos-latest, platform: ios, target: aarch64-apple-ios-sim }
-          - { runner: ubuntu-latest, platform: android, target: aarch64-linux-android }
+          - {
+              runner: windows-latest,
+              platform: windows,
+              target: x86_64-pc-windows-msvc,
+            }
+          - {
+              runner: macos-latest,
+              platform: macos,
+              target: aarch64-apple-darwin,
+            }
+          - {
+              runner: macos-latest,
+              platform: ios,
+              target: aarch64-apple-ios-sim,
+            }
+          - {
+              runner: ubuntu-latest,
+              platform: android,
+              target: aarch64-linux-android,
+            }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

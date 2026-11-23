@@ -35,12 +35,12 @@
 
 ## 验证改动
 
-| 改动 | 在仓库根目录运行 |
-| --- | --- |
-| 书墙、设置或阅读页布局 | `bun run test:e2e tests/design.spec.ts` 在桌面和手机尺寸下与 HTML 原稿对照。应用截图、原稿截图和差异图保存在 `test-results/`。 |
-| 导入、阅读、书库管理或备份 | `bun run test:e2e` 在独立的 `.qa-dist` 生产构建上执行浏览器测试。 |
-| 原生存储或修订冲突处理 | `bun run test:native` 验证分块写入、去重、回滚和重新打开书库。 |
-| 原生资源地址、PDF Worker 或阅读位置持久化 | 在 macOS 桌面会话中运行 `bun run test:webview`，它使用独立的测试书库。 |
+| 改动                                      | 在仓库根目录运行                                                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 书墙、设置或阅读页布局                    | `bun run test:e2e tests/design.spec.ts` 在桌面和手机尺寸下与 HTML 原稿对照。应用截图、原稿截图和差异图保存在 `test-results/`。 |
+| 导入、阅读、书库管理或备份                | `bun run test:e2e` 在独立的 `.qa-dist` 生产构建上执行浏览器测试。                                                              |
+| 原生存储或修订冲突处理                    | `bun run test:native` 验证分块写入、去重、回滚和重新打开书库。                                                                 |
+| 原生资源地址、PDF Worker 或阅读位置持久化 | 在 macOS 桌面会话中运行 `bun run test:webview`，它使用独立的测试书库。                                                         |
 
 Playwright 默认使用已安装的 Chrome。使用自带 Chromium 时，先运行 `bunx playwright install chromium`，再设置 `PLAYWRIGHT_CHANNEL=chromium`。可选的个人书库用例通过环境变量读取本地路径。`HEARTHREAD_TEST_EPUB` 对应的书至少需要六个目录项，`HEARTHREAD_TEST_PDF` 对应的文件至少需要十页。个人书籍放在仓库之外。
 
