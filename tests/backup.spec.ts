@@ -5,13 +5,11 @@ test("export library and restore into a fresh local store", async ({
 }, info) => {
   await page.goto("/");
   await page.getByLabel("导入书籍", { exact: true }).click();
-  await page
-    .locator("#import-files")
-    .setInputFiles({
-      name: "备份样本.md",
-      mimeType: "text/markdown",
-      buffer: Buffer.from("# 已恢复\n\n离线书库。"),
-    });
+  await page.locator("#import-files").setInputFiles({
+    name: "备份样本.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from("# 已恢复\n\n离线书库。"),
+  });
   await page.getByRole("button", { name: "导入 1 本" }).click();
   await expect(
     page.getByRole("button", { name: "选择 备份样本", exact: true }),

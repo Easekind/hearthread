@@ -2,15 +2,15 @@
 
 ## 从开源实现中采用的设计
 
-| 项目与版本依据 | 采用的做法 | 在 hearthread 的落点 |
-| --- | --- | --- |
-| [Tauri 2](https://github.com/tauri-apps/tauri) 与 [Vite 配置](https://v2.tauri.app/start/frontend/vite/) | 各平台复用 React 页面，IPC 处理原生文件操作 | 独立的 Rust 库入口、移动端入口、按窗口配置的能力与只读资源范围 |
-| [Readest 的 FoliateViewer](https://github.com/readest/readest/blob/4bd787e274def5cc648422045e0e9f46b6038989/apps/readest-app/src/app/reader/components/FoliateViewer.tsx) | 阅读视图有独立生命周期；定位事件和 iframe 内交互桥接给外层应用 | `src/reader/Epub.tsx` 打开、监听、恢复 CFI、释放视图和书籍资源 |
-| [本地优化版 foliate-js](https://github.com/readest/foliate-js/tree/fd05acdeb0a1dc16752d252bbb4bf6971e175450) | 复用分章加载、排版分页、长章节切分、固定版式及搜索接口 | `public/foliate` 固定该提交的 EPUB 运行时子集。应用只走 EPUB 路径。固定版式使用现代 WebView 自带的可构造样式表 |
-| [Mozilla PDF.js 示例](https://mozilla.github.io/pdf.js/examples/) 与 [Readest 的 PDF Worker 配置](https://github.com/readest/readest/blob/4bd787e274def5cc648422045e0e9f46b6038989/apps/readest-app/src/libs/document.ts) | 独立解析 Worker、按页取 viewport、控制 canvas 尺寸；资源地址按应用来源解析 | 只挂载当前页，高 DPI 绘制有像素预算。并行生成可选文字层，换页取消旧任务，关闭时销毁 loading task |
-| [react-markdown](https://github.com/remarkjs/react-markdown) 与 [remark-gfm](https://github.com/remarkjs/remark-gfm) | 语法树生成 React 元素，GFM 扩展表格等语法 | 读取独立文档，跳过原始 HTML；锚点在阅读层定位，用户点击外链后交由平台打开 |
-| [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog) | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互 | Button、Switch 和 Slider 在 `src/ui/` 中维护。外观开关、排版滑动条与 EPUB 章节滑动条复用设计稿样式，分别由 Radix Switch 和 Slider 处理输入。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
-| [rusqlite](https://github.com/rusqlite/rusqlite) | 在 Rust 层使用随应用打包的 SQLite | 参数化 SQL、WAL、FULL 同步、每批变更使用一个事务 |
+| 项目与版本依据                                                                                                                                                                                                            | 采用的做法                                                                 | 在 hearthread 的落点                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tauri 2](https://github.com/tauri-apps/tauri) 与 [Vite 配置](https://v2.tauri.app/start/frontend/vite/)                                                                                                                  | 各平台复用 React 页面，IPC 处理原生文件操作                                | 独立的 Rust 库入口、移动端入口、按窗口配置的能力与只读资源范围                                                                                                                                          |
+| [Readest 的 FoliateViewer](https://github.com/readest/readest/blob/4bd787e274def5cc648422045e0e9f46b6038989/apps/readest-app/src/app/reader/components/FoliateViewer.tsx)                                                 | 阅读视图有独立生命周期；定位事件和 iframe 内交互桥接给外层应用             | `src/reader/Epub.tsx` 打开、监听、恢复 CFI、释放视图和书籍资源                                                                                                                                          |
+| [本地优化版 foliate-js](https://github.com/readest/foliate-js/tree/fd05acdeb0a1dc16752d252bbb4bf6971e175450)                                                                                                              | 复用分章加载、排版分页、长章节切分、固定版式及搜索接口                     | `public/foliate` 固定该提交的 EPUB 运行时子集。应用只走 EPUB 路径。固定版式使用现代 WebView 自带的可构造样式表                                                                                          |
+| [Mozilla PDF.js 示例](https://mozilla.github.io/pdf.js/examples/) 与 [Readest 的 PDF Worker 配置](https://github.com/readest/readest/blob/4bd787e274def5cc648422045e0e9f46b6038989/apps/readest-app/src/libs/document.ts) | 独立解析 Worker、按页取 viewport、控制 canvas 尺寸；资源地址按应用来源解析 | 只挂载当前页，高 DPI 绘制有像素预算。并行生成可选文字层，换页取消旧任务，关闭时销毁 loading task                                                                                                        |
+| [react-markdown](https://github.com/remarkjs/react-markdown) 与 [remark-gfm](https://github.com/remarkjs/remark-gfm)                                                                                                      | 语法树生成 React 元素，GFM 扩展表格等语法                                  | 读取独立文档，跳过原始 HTML；锚点在阅读层定位，用户点击外链后交由平台打开                                                                                                                               |
+| [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog)                                                                                                                                                           | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互                      | Button、Switch 和 Slider 在 `src/ui/` 中维护。外观开关、排版滑动条与 EPUB 章节滑动条复用设计稿样式，分别由 Radix Switch 和 Slider 处理输入。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
+| [rusqlite](https://github.com/rusqlite/rusqlite)                                                                                                                                                                          | 在 Rust 层使用随应用打包的 SQLite                                          | 参数化 SQL、WAL、FULL 同步、每批变更使用一个事务                                                                                                                                                        |
 
 Bun 和 Cargo 分别通过 `bun.lock` 和 `Cargo.lock` 锁定依赖版本。Bun 版本在 `package.json` 的 `packageManager` 中指定，CI 按此版本执行冻结安装。项目级 `.npmrc` 指定公共注册表，保证本地和 CI 使用同一依赖来源。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。
 
@@ -37,6 +37,8 @@ library/
 React 组件控制真实交互与持久化。原稿 CSS 作为独立静态资源加载，避免构建器重新计算颜色和子像素值。Tailwind 用于额外操作界面，保留设计稿的默认样式。PDF、Markdown、设置和统计图表使用动态导入。书内内容只进入对应渲染器。EPUB 章节带独立内容安全策略；HTML 事件属性和活动内容在创建阅读文档前移除。
 
 ## 配置和工具经验
+
+- Git 通过 Husky 在提交前运行 `bun run check`。构建和提交共用 tsrs 类型检查。Oxfmt 保留按原文拼接的交互稿片段和提取资源，Oxlint 检查这些片段时允许其他片段引用顶层声明。第三方 EPUB 运行时和生成的平台工程由各自的更新流程维护。
 
 - `src-tauri/tauri.conf.json` 管理系统目标、桌面窗口与 CSP；`capabilities/default.json` 限制原生能力。导出原件通过系统保存对话框取得目标。开发与验收书库使用不同的应用标识。
 - WKWebView 18.6 缺少新版 PDF.js 默认构建用到的 Map 方法。主模块与 Worker 统一采用同版本的 legacy 构建，自带所需兼容层。解码器路径使用绝对应用 URL，由主页面代读资源。

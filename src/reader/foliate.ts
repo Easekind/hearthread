@@ -36,9 +36,7 @@ export interface EpubView extends HTMLElement {
     setAttribute(key: string, value: string): void;
   };
   lastLocation?: Relocation;
-  search(o: {
-    query: string;
-  }): AsyncGenerator<
+  search(o: { query: string }): AsyncGenerator<
     | {
         subitems?: {
           cfi: string;
@@ -76,7 +74,9 @@ export async function openEpub(file: File): Promise<Epub> {
       ))
         node.remove();
       for (const el of doc.querySelectorAll("*"))
-        for (const attr of [...el.attributes]) {
+        // Removing an attribute shifts later entries in the live collection.
+        for (let i = el.attributes.length - 1; i >= 0; i--) {
+          const attr = el.attributes[i];
           if (
             /^on/i.test(attr.localName) ||
             (["href", "src", "action", "data"].includes(attr.localName) &&

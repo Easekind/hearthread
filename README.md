@@ -26,11 +26,13 @@ bun install --frozen-lockfile
 bun run tauri dev
 ```
 
+Installing dependencies activates the Git pre-commit hook. Each commit runs `bun run check` across the working tree. It checks formatting with Oxfmt, lints with Oxlint, type-checks the app and Playwright tests with tsrs, then runs `cargo fmt --check` and `cargo check --all-targets` for the host platform. Install rustfmt with `rustup component add rustfmt` if needed. To fix formatting, run `bun run fmt` and `cargo fmt --manifest-path src-tauri/Cargo.toml`.
+
 For browser development, run `bun run dev` and open `http://127.0.0.1:1420`. The browser keeps its own library in IndexedDB. The native app stores files and a SQLite catalog in its application data directory. You can transfer a library between them with a ZIP backup.
 
-| Build target | Command |
-| --- | --- |
-| macOS app | `bun run tauri build --bundles app` |
-| Windows desktop | `bun run tauri build` |
-| iOS simulator on Apple Silicon | `bun run tauri ios build --debug --target aarch64-sim` |
-| Android arm64 debug APK | `bun run tauri android build --debug --apk --target aarch64` |
+| Build target                   | Command                                                      |
+| ------------------------------ | ------------------------------------------------------------ |
+| macOS app                      | `bun run tauri build --bundles app`                          |
+| Windows desktop                | `bun run tauri build`                                        |
+| iOS simulator on Apple Silicon | `bun run tauri ios build --debug --target aarch64-sim`       |
+| Android arm64 debug APK        | `bun run tauri android build --debug --apk --target aarch64` |

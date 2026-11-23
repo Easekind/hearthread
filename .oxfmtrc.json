@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "bun.lock",
+    "public/design/",
+    "public/foliate/",
+    "public/samples/",
+    "src-tauri/gen/",
+    "src/library/edition.json",
+    "src/library/jackets.json",
+    "src/reader/chapters.json",
+    "src/reader/pdf-sample.html",
+    "src/ui/icons.json",
+    "docs/design/v0.1/*.{html,css,js}"
+  ]
+}

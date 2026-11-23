@@ -26,11 +26,13 @@ bun install --frozen-lockfile
 bun run tauri dev
 ```
 
+安装依赖后，Git 会在每次提交前运行 `bun run check`，检查整个工作区。Oxfmt 校验格式，Oxlint 检查代码，tsrs 检查应用和 Playwright 测试的类型，随后运行 `cargo fmt --check` 和当前平台的 `cargo check --all-targets`。缺少 rustfmt 时运行 `rustup component add rustfmt`。需要修复格式时，运行 `bun run fmt` 和 `cargo fmt --manifest-path src-tauri/Cargo.toml`。
+
 在浏览器中开发时，运行 `bun run dev`，打开 `http://127.0.0.1:1420`。浏览器使用独立的 IndexedDB 书库，原生应用将文件和 SQLite 数据库存放在系统应用数据目录。两者之间可以通过 ZIP 备份迁移书库。
 
-| 构建目标 | 命令 |
-| --- | --- |
-| macOS 应用 | `bun run tauri build --bundles app` |
-| Windows 桌面应用 | `bun run tauri build` |
-| Apple Silicon 上的 iOS 模拟器 | `bun run tauri ios build --debug --target aarch64-sim` |
-| Android arm64 调试版 APK | `bun run tauri android build --debug --apk --target aarch64` |
+| 构建目标                      | 命令                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| macOS 应用                    | `bun run tauri build --bundles app`                          |
+| Windows 桌面应用              | `bun run tauri build`                                        |
+| Apple Silicon 上的 iOS 模拟器 | `bun run tauri ios build --debug --target aarch64-sim`       |
+| Android arm64 调试版 APK      | `bun run tauri android build --debug --apk --target aarch64` |

@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "public/foliate/",
+    "src-tauri/gen/",
+    "docs/design/v0.1/index.html"
+  ],
+  "overrides": [
+    {
+      "files": ["docs/design/v0.1/*.js"],
+      "rules": { "no-unused-vars": "off" }
+    }
+  ]
+}

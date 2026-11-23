@@ -3,7 +3,12 @@ import type { Book, Catalog } from "../model";
 import { Cover, Icon, Menu, Select, Tool } from "../ui/controls";
 import { patchBooks, patchPrefs } from "../storage/catalog";
 export type Action =
-  "import" | "rename" | "move" | "delete" | "export" | "folder";
+  | "import"
+  | "rename"
+  | "move"
+  | "delete"
+  | "export"
+  | "folder";
 export interface ShelfProps {
   data: Catalog;
   query: string;
@@ -260,8 +265,9 @@ export function Shelf({
               <tr
                 key={b.id}
                 onClick={(e) => {
-                  if (!(e.target as HTMLElement).closest("button,input"))
-                    batch ? toggle(b.id) : open(b);
+                  if ((e.target as HTMLElement).closest("button,input")) return;
+                  if (batch) toggle(b.id);
+                  else open(b);
                 }}
               >
                 <td>

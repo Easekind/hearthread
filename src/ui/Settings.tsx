@@ -225,7 +225,9 @@ export function Settings({
                       <Switch
                         aria-label="跟随系统外观"
                         checked={p.system}
-                        onCheckedChange={(system) => void patchPrefs({ system })}
+                        onCheckedChange={(system) =>
+                          void patchPrefs({ system })
+                        }
                       />
                     </Row>
                   </Group>
