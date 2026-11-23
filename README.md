@@ -2,7 +2,7 @@
 
 English · [简体中文](README.zh-CN.md)
 
-hearthread is a local-first, cross-platform personal library that starts with immersive reading and is growing to bring books, documents and images together in one place.
+Hearthread is a local-first, cross-platform personal library. It starts with immersive reading and is growing to unify books, documents and images in one place.
 
 ![The book wall with twelve covers and the selected book in the reading bar](docs/verification/library-desktop.png)
 

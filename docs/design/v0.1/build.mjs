@@ -5,7 +5,7 @@ function replace(original, replacement) {
   if (!html.includes(original)) throw Error('Missing prototype source: ' + original);
   html = html.replace(original, () => replacement);
 }
-replace('<title>hearthread v0.8 / Modern Library</title>', '<title>hearthread · 书库 v0.9</title>');
+replace('<title>hearthread v0.8 / Modern Library</title>', '<title>hearthread · 书库 v0.1</title>');
 replace("shellTheme='dark'", "shellTheme='light'");
 // Keep the inherited button interactions exclusive to actionable controls.
 replace('button:hover{background:var(--color-paper-2)}', 'button:where(:enabled):hover{background:var(--color-paper-2)}');
@@ -14,7 +14,9 @@ html = html.replaceAll('.button.primary:hover{', '.button.primary:where(:enabled
 // The archived sheet's hover rules contain only hover selectors. Keep their
 // source order and surrounding breakpoints while restricting them to a mouse.
 const legacyStyle=html.slice(html.indexOf('<style>')+7,html.indexOf('</style>'));
-replace(legacyStyle,legacyStyle.replace(/(?<=[{}\n])([^{}\n]*:hover[^{}\n]*)\{([^{}]*)\}/g,
+const editionStyle = legacyStyle.replace(/\/\*[\s\S]*?\*\//g,
+  comment => comment.replace(/\bv0\.\d+\b/g, 'v0.1'));
+replace(legacyStyle,editionStyle.replace(/(?<=[{}\n])([^{}\n]*:hover[^{}\n]*)\{([^{}]*)\}/g,
   '@media (hover:hover) and (pointer:fine){$1{$2}}'));
 replace('width=device-width,initial-scale=1', 'width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content');
 replace('<meta name="description"', '<meta name="theme-color" content="#faf9f7"><meta name="description"');
