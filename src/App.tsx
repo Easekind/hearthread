@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   Suspense,
   lazy,
@@ -227,7 +228,7 @@ export default function App() {
   const toggle = () =>
       drawerSize ? setMobile((v) => !v) : setCompact((v) => !v),
     expanded = drawerSize ? mobile : !compact,
-    label = expanded ? "收起导航" : "展开导航";
+    label = expanded ? t("nav.collapse") : t("nav.expand");
   return (
     <>
       <div className="app-root" id="app">
@@ -242,13 +243,13 @@ export default function App() {
           <aside
             className="studio-nav"
             id="library-nav"
-            aria-label="书库导航"
+            aria-label={t("nav.library")}
             role={mobile ? "dialog" : undefined}
             aria-modal={mobile || undefined}
           >
             <button
               className="studio-brand"
-              aria-label="hearthread 书库"
+              aria-label={t("nav.home")}
               onClick={home}
             >
               <Brand />
@@ -256,39 +257,39 @@ export default function App() {
             {mobile && (
               <Tool
                 className="icon-button nav-close"
-                label="关闭导航"
+                label={t("nav.close")}
                 symbol="close"
                 onClick={toggle}
               />
             )}
             <div className="nav-main">
-              <nav aria-label="内容空间">
+              <nav aria-label={t("nav.sections")}>
                 <button
                   className="nav-item is-current"
                   aria-current="page"
-                  title="书库"
+                  title={t("library.title")}
                   onClick={home}
                 >
                   <Icon name="library" />
-                  <span>书库</span>
+                  <span>{t("library.title")}</span>
                 </button>
               </nav>
             </div>
             <div className="nav-bottom">
               <button
                 className="nav-item"
-                title="设置"
+                title={t("settings.title")}
                 onClick={() => route("settings")}
               >
                 <Icon name="settings" />
-                <span>设置</span>
+                <span>{t("settings.title")}</span>
               </button>
             </div>
           </aside>
           {mobile && (
             <button
               className="nav-scrim"
-              aria-label="关闭导航"
+              aria-label={t("nav.close")}
               onClick={toggle}
             />
           )}
@@ -313,14 +314,14 @@ export default function App() {
                   type="search"
                   enterKeyHint="search"
                   autoComplete="off"
-                  aria-label="搜索书库"
-                  placeholder="搜索书名或作者"
+                  aria-label={t("library.search")}
+                  placeholder={t("library.searchHint")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {query ? (
                   <Tool
-                    label="清除搜索"
+                    label={t("search.clear")}
                     symbol="close"
                     onClick={() => {
                       setQuery("");
@@ -333,11 +334,11 @@ export default function App() {
               </div>
               <button
                 className="button import-button"
-                aria-label="导入书籍"
+                aria-label={t("library.import")}
                 onClick={() => action("import")}
               >
                 <Icon name="importBook" />
-                <span>导入书籍</span>
+                <span>{t("library.import")}</span>
               </button>
             </header>
             <main className="studio-main" id="main">
@@ -392,7 +393,7 @@ export default function App() {
                   setNotice(null);
                 }}
               >
-                撤销
+                {t("action.undo")}
               </button>
             )}
           </div>

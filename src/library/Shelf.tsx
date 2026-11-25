@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+import { collectionName, chapterLabel } from "./labels";
 import { useState } from "react";
 import type { Book, Catalog } from "../model";
 import { Cover, Icon, Menu, Select, Tool } from "../ui/controls";
@@ -18,7 +20,6 @@ export interface ShelfProps {
   open: (b: Book) => void;
   action: (kind: Action, books?: Book[]) => void;
 }
-const sorts = { recent: "最近阅读", added: "最近添加", title: "书名排序" };
 export function Shelf({
   data,
   query,
@@ -32,6 +33,11 @@ export function Shelf({
     [batch, setBatch] = useState(false),
     [checked, check] = useState<string[]>([]);
   const { prefs } = data;
+  const sorts = {
+    recent: t("sort.recent"),
+    added: t("sort.added"),
+    title: t("sort.title"),
+  };
   const items = data.books
     .filter(
       (b) =>
@@ -49,10 +55,11 @@ export function Shelf({
         ? b.readAt - a.readAt || a.added - b.added
         : prefs.sort === "added"
           ? b.added - a.added
-          : a.title.localeCompare(b.title, "zh"),
+          : a.title.localeCompare(b.title, prefs.locale),
     );
   const current = items.find((b) => b.id === selected) ?? items[0],
     list = prefs.view === "list" || batch;
+  const chapter = current && chapterLabel(current);
   function step(delta: number) {
     if (items.length)
       setSelected(
@@ -69,21 +76,21 @@ export function Shelf({
   function menu(b: Book) {
     return (
       <Menu
-        label={b.title + " 的操作"}
+        label={t("book.actions", { title: b.title })}
         trigger={
           <button
             type="button"
             className="icon-button"
             data-book-menu={b.id}
-            aria-label={b.title + " 的更多操作"}
+            aria-label={t("book.more", { title: b.title })}
           >
             <Icon name="more" />
           </button>
         }
         options={[
-          { label: "打开阅读", icon: "book", run: () => open(b) },
+          { label: t("book.open"), icon: "book", run: () => open(b) },
           {
-            label: b.pinned ? "取消置顶" : "置顶",
+            label: b.pinned ? t("book.unpin") : t("book.pin"),
             icon: "pin",
             divider: true,
             run: () =>
@@ -94,10 +101,10 @@ export function Shelf({
           },
           ...(
             [
-              ["rename", "edit", "重命名"],
-              ["move", "moveBook", "移动到分类"],
-              ["export", "exportBook", "导出原文件"],
-              ["delete", "trash", "删除"],
+              ["rename", "edit", t("action.rename")],
+              ["move", "moveBook", t("dialog.move")],
+              ["export", "exportBook", t("book.export")],
+              ["delete", "trash", t("action.delete")],
             ] as const
           ).map(([kind, icon, label]) => ({
             label,
@@ -114,10 +121,10 @@ export function Shelf({
     <>
       <header className="studio-heading">
         <div className="heading-name">
-          <h1>{query ? "搜索藏书" : "我的书库"}</h1>
-          <span>{items.length} 本</span>
+          <h1>{query ? t("library.results") : t("library.heading")}</h1>
+          <span>{t("library.count", { count: items.length })}</span>
         </div>
-        <div className="view-switch" aria-label="书库视图">
+        <div className="view-switch" aria-label={t("library.view")}>
           {(["grid", "list"] as const).map((v) => (
             <button
               key={v}
@@ -129,31 +136,33 @@ export function Shelf({
               }}
             >
               <Icon name={v} />
-              {v === "grid" ? "书墙" : "列表"}
+              {v === "grid" ? t("view.grid") : t("view.list")}
             </button>
           ))}
         </div>
       </header>
       <div className="wall-toolbar library-tools">
         <span className="toolbar-summary">
-          {query ? "“" + query + "” 的搜索结果" : ""}
+          {query ? t("library.query", { query }) : ""}
         </span>
         <div className="library-tool-actions">
           <Select
-            label="按分类筛选"
+            label={t("library.filter")}
             value={folder}
             change={(v) => {
               setFolder(v);
               check([]);
             }}
             options={{
-              "": "全部分类",
-              ...Object.fromEntries(data.folders.map((f) => [f, f])),
+              "": t("library.allCollections"),
+              ...Object.fromEntries(
+                data.folders.map((f) => [f, collectionName(f)]),
+              ),
             }}
             icon="folder"
             extra={[
               {
-                label: "新建分类",
+                label: t("dialog.folder"),
                 icon: "plus",
                 divider: true,
                 run: () => action("folder"),
@@ -161,7 +170,7 @@ export function Shelf({
             ]}
           />
           <Select
-            label="藏书排序"
+            label={t("library.sort")}
             value={prefs.sort}
             options={sorts}
             icon="sort"
@@ -176,13 +185,13 @@ export function Shelf({
               }}
             >
               <Icon name="manage" />
-              管理藏书
+              {t("library.manage")}
             </button>
           )}
         </div>
       </div>
       {batch && (
-        <section className="selection-bar" aria-label="批量管理">
+        <section className="selection-bar" aria-label={t("library.batch")}>
           <div className="selection-state">
             <button
               disabled={!items.length}
@@ -195,19 +204,17 @@ export function Shelf({
               }
             >
               {items.length > 0 && selectedBooks.length === items.length
-                ? "取消全选"
-                : "全选"}
+                ? t("selection.clear")
+                : t("selection.all")}
             </button>
-            <span>
-              已选 <b>{selectedBooks.length}</b> 本
-            </span>
+            <span>{t("selection.count", { count: selectedBooks.length })}</span>
           </div>
           <div className="selection-ops">
             {(
               [
-                ["move", "moveBook", "移动"],
-                ["export", "exportBook", "导出"],
-                ["delete", "trash", "删除"],
+                ["move", "moveBook", t("action.move")],
+                ["export", "exportBook", t("action.export")],
+                ["delete", "trash", t("action.delete")],
               ] as const
             ).map(([kind, symbol, title]) => (
               <button
@@ -221,7 +228,7 @@ export function Shelf({
             ))}
           </div>
           <button className="finish-selection" onClick={() => setBatch(false)}>
-            完成
+            {t("action.done")}
           </button>
         </section>
       )}
@@ -232,28 +239,30 @@ export function Shelf({
           </span>
           <h2>
             {query
-              ? "没有找到匹配的书籍"
+              ? t("library.noResults")
               : folder
-                ? "「" + folder + "」里还没有书"
-                : "书库里还没有书"}
+                ? t("collection.empty", { name: collectionName(folder) })
+                : t("library.empty")}
           </h2>
-          <p>
-            {query
-              ? "试试其他书名或作者姓名。"
-              : "可以导入 EPUB、PDF 或 Markdown。"}
-          </p>
+          <p>{query ? t("library.trySearch") : t("library.importHint")}</p>
           <button
             className="button"
             onClick={() => (query ? clear() : action("import"))}
           >
-            {query ? "清除搜索" : "导入书籍"}
+            {query ? t("search.clear") : t("library.import")}
           </button>
         </section>
       ) : list ? (
         <table className="list-view">
           <thead>
             <tr>
-              {["书名 / 作者", "格式", "阅读进度", "大小", ""].map((h, i) => (
+              {[
+                t("book.titleAuthor"),
+                t("book.format"),
+                t("book.progress"),
+                t("book.size"),
+                "",
+              ].map((h, i) => (
                 <th className={i === 2 || i === 3 ? "num" : ""} key={h}>
                   {h}
                 </th>
@@ -276,7 +285,7 @@ export function Shelf({
                       <input
                         type="checkbox"
                         checked={checked.includes(b.id)}
-                        aria-label={"选择 " + b.title}
+                        aria-label={t("book.select", { title: b.title })}
                         onChange={() => toggle(b.id)}
                       />
                     )}
@@ -289,7 +298,9 @@ export function Shelf({
                     >
                       <div className="list-book-title">{b.title}</div>
                       <small>
-                        {b.author.replace(" / 示例文档", "")}
+                        {b.object
+                          ? b.author
+                          : b.author.replace(" / 示例文档", "")}
                         <span className="mobile-format"> / {b.type}</span>
                       </small>
                     </button>
@@ -297,7 +308,7 @@ export function Shelf({
                 </td>
                 <td className="muted">{b.type}</td>
                 <td className="num">
-                  {b.progress ? b.progress + "%" : "未读"}
+                  {b.progress ? b.progress + "%" : t("book.unread")}
                 </td>
                 <td className="num muted">{b.size}</td>
                 <td>{!batch && menu(b)}</td>
@@ -307,7 +318,7 @@ export function Shelf({
         </table>
       ) : (
         <>
-          <section className="book-wall" aria-label="藏书书墙">
+          <section className="book-wall" aria-label={t("library.wall")}>
             {items.map((b) => (
               <article
                 className={"wall-item " + (b === current ? "is-selected" : "")}
@@ -317,7 +328,7 @@ export function Shelf({
                 <button
                   className="wall-select space-book"
                   data-focus-book={b.id}
-                  aria-label={"选择 " + b.title}
+                  aria-label={t("book.select", { title: b.title })}
                   aria-pressed={b === current}
                   onClick={() => setSelected(b.id)}
                   onDoubleClick={() => open(b)}
@@ -350,23 +361,25 @@ export function Shelf({
                       <Cover book={b} />
                     </div>
                     <span className="wall-selected">
-                      <Icon name="check" /> 已选择
+                      <Icon name="check" /> {t("selection.selected")}
                     </span>
                   </div>
                   <span className="wall-title">{b.title}</span>
                   <span className="wall-author">
-                    {b.author.replace(" / 示例文档", "")}
+                    {b.object ? b.author : b.author.replace(" / 示例文档", "")}
                   </span>
                 </button>
                 <div className="wall-meta">
                   <span>{b.type}</span>
-                  <span>{b.progress ? b.progress + "%" : "未读"}</span>
+                  <span>
+                    {b.progress ? b.progress + "%" : t("book.unread")}
+                  </span>
                   {menu(b)}
                 </div>
               </article>
             ))}
           </section>
-          <footer className="reading-dock" aria-label="选中书籍">
+          <footer className="reading-dock" aria-label={t("library.current")}>
             <div className="dock-book">
               <div className="mini-cover dock-cover">
                 <Cover book={current} />
@@ -375,22 +388,30 @@ export function Shelf({
                 <strong>{current.title}</strong>
                 <span>
                   {current.progress
-                    ? "已读 " + current.progress + "%"
-                    : "尚未开始"}
+                    ? t("book.percent", { percent: current.progress })
+                    : t("book.notStarted")}
                   <span className="dock-chapter">
-                    {" / " + current.chapter}
+                    {chapter && " / " + chapter}
                   </span>
                 </span>
               </div>
             </div>
             <div className="dock-controls">
-              <Tool label="上一本" symbol="previous" onClick={() => step(-1)} />
-              <Tool label="下一本" symbol="next" onClick={() => step(1)} />
+              <Tool
+                label={t("book.previous")}
+                symbol="previous"
+                onClick={() => step(-1)}
+              />
+              <Tool
+                label={t("book.next")}
+                symbol="next"
+                onClick={() => step(1)}
+              />
               <button
                 className="button primary read-button"
                 onClick={() => open(current)}
               >
-                {current.progress ? "继续阅读" : "开始阅读"}
+                {current.progress ? t("book.resume") : t("book.start")}
                 <Icon name="arrow" />
               </button>
             </div>

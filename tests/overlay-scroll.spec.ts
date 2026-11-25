@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./chinese-library";
 
 test.use({ launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } });
 

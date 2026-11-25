@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./chinese-library";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -8,7 +8,13 @@ for (const [width, height] of [
   [1440, 900],
   [390, 844],
 ])
-  for (const surface of ["library", "settings", "typography", "read-1"]) {
+  for (const surface of [
+    "library",
+    "settings",
+    "language",
+    "typography",
+    "read-1",
+  ]) {
     test(surface + " pixels " + width, async ({ page }, info) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -21,23 +27,27 @@ for (const [width, height] of [
         ],
         ["application", "/"],
       ]) {
-        await page.goto(
-          url + "#" + (surface === "typography" ? "settings" : surface),
-        );
-        if (surface === "typography") {
+        const section =
+          surface === "typography"
+            ? "阅读排版"
+            : surface === "language"
+              ? "语言"
+              : "";
+        await page.goto(url + "#" + (section ? "settings" : surface));
+        if (section) {
           if (width === 390) {
             await page.getByRole("button", { name: /设置分类/ }).click();
-            await page.getByRole("menuitemradio", { name: "阅读排版" }).click();
+            await page.getByRole("menuitemradio", { name: section }).click();
           } else {
             await page
-              .getByRole("button", { name: "阅读排版", exact: true })
+              .getByRole("button", { name: section, exact: true })
               .click();
           }
         }
         const target =
           surface === "typography"
             ? ".type-specimen"
-            : surface === "settings"
+            : surface === "settings" || surface === "language"
               ? ".preferences"
               : surface === "library"
                 ? ".wall-select"
@@ -50,7 +60,11 @@ for (const [width, height] of [
           await new Promise(requestAnimationFrame);
         });
         const capture =
-          surface === "typography" ? page.locator(".type-specimen") : page;
+          surface === "typography"
+            ? page.locator(".type-specimen")
+            : surface === "language"
+              ? page.locator(".pref-group")
+              : page;
         const buffer = await capture.screenshot({
           path: info.outputPath(name + ".png"),
           animations: "disabled",

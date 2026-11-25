@@ -20,10 +20,10 @@ async fn append_object(library: State<'_, Library>, request: Request<'_>) -> Res
             .headers()
             .get(name)
             .and_then(|v| v.to_str().ok())
-            .ok_or_else(|| "缺少分块标识".to_string())
+            .ok_or_else(|| "error.chunkId".to_string())
     };
-    let id = header("x-upload")?.parse().map_err(|_| "无效导入会话")?;
-    let offset = header("x-offset")?.parse().map_err(|_| "无效分块位置")?;
+    let id = header("x-upload")?.parse().map_err(|_| "error.uploadId")?;
+    let offset = header("x-offset")?.parse().map_err(|_| "error.offset")?;
     match request.body() {
         InvokeBody::Raw(bytes) => library.append(id, offset, bytes),
         // Android WebView can encode binary IPC bodies as JSON arrays.

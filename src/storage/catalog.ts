@@ -1,3 +1,4 @@
+import { t, isLocale } from "../i18n";
 import { files, type Change } from "./files";
 import {
   defaults,
@@ -35,14 +36,17 @@ export async function loadCatalog() {
     if (row.key.startsWith("books/"))
       books.set(value.id, {
         readAt: 0,
-        chapter: "尚未开始",
+        chapter: "",
         progress: 0,
         ...books.get(value.id),
         ...value,
       });
     if (row.key === profile + "settings") {
       for (const [key, setting] of Object.entries(value)) {
-        if (Object.hasOwn(defaults, key))
+        if (
+          Object.hasOwn(defaults, key) &&
+          (key !== "locale" || isLocale(setting))
+        )
           Object.assign(prefs, { [key]: setting });
       }
     }
@@ -81,11 +85,13 @@ export function update(edit: (current: Catalog) => Partial<Catalog>) {
       const old = new Map(snapshot.books.map((b) => [b.id, b]));
       for (const book of next.books) {
         if (old.get(book.id) === book) continue;
-        const { progress, chapter, location, readAt, ...shared } = book;
+        const { progress, chapter, sectionIndex, location, readAt, ...shared } =
+          book;
         change("books/" + book.id, shared);
         change(profile + "reading/" + book.id, {
           progress,
           chapter,
+          sectionIndex,
           location,
           readAt,
         });
@@ -113,7 +119,7 @@ export const patchBooks = (ids: string[], patch: Partial<Book>) =>
 export async function bookSource(book: Book) {
   if (book.object) return files.url(book.object);
   if (!seeded.some((b) => b.style === book.style))
-    throw new Error("书籍来源无效");
+    throw new Error(t("error.source"));
   return {
     url: "/samples/" + book.style + "." + book.type.toLowerCase(),
     release() {},
@@ -123,7 +129,7 @@ export async function original(book: Book) {
   const source = await bookSource(book);
   try {
     const r = await fetch(source.url);
-    if (!r.ok) throw new Error("无法读取原文件");
+    if (!r.ok) throw new Error(t("error.readOriginal"));
     return await r.blob();
   } finally {
     source.release();

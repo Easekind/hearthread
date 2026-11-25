@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./chinese-library";
 test("export library and restore into a fresh local store", async ({
   page,
   browser,
@@ -55,7 +55,9 @@ test("export library and restore into a fresh local store", async ({
   const fresh = await browser.newPage({ baseURL: "http://127.0.0.1:4173" });
   try {
     await fresh.goto("/#settings");
-    await fresh.getByRole("button", { name: "本地存储", exact: true }).click();
+    await fresh
+      .getByRole("button", { name: "Local storage", exact: true })
+      .click();
     await fresh.locator("[type=file]").setInputFiles(file);
     await expect(fresh.getByRole("status")).toContainText("书库已恢复");
     await fresh.getByRole("button", { name: "外观", exact: true }).click();

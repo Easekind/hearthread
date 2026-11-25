@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import {
   getDocument,
@@ -59,9 +60,8 @@ export default function Pdf(props: EngineProps) {
                 if (at >= 0)
                   hits.push({
                     label:
-                      "第 " +
-                      i +
-                      " 页 · " +
+                      t("reader.page", { number: i }) +
+                      " · " +
                       body.slice(Math.max(0, at - 24), at + 64),
                     target: i - 1,
                   });
@@ -70,7 +70,7 @@ export default function Pdf(props: EngineProps) {
             },
           },
           Array.from({ length: pdf.numPages }, (_, i) => ({
-            label: "第 " + (i + 1) + " 页",
+            label: t("reader.page", { number: i + 1 }),
             target: i,
           })),
           pdf.numPages,
@@ -134,7 +134,7 @@ export default function Pdf(props: EngineProps) {
       if (live)
         latest.current.position({
           location: String(page),
-          chapter: "第 " + page + " 页",
+          chapter: "",
           progress: Math.round((page / doc!.numPages) * 100),
           index: page - 1,
         });
@@ -151,7 +151,7 @@ export default function Pdf(props: EngineProps) {
   return (
     <div ref={host} className="pdf-document">
       <div className="pdf-sheet">
-        <canvas ref={canvas} aria-label={"第 " + page + " 页"} />
+        <canvas ref={canvas} aria-label={t("reader.page", { number: page })} />
         <div className="textLayer" ref={text} />
       </div>
     </div>

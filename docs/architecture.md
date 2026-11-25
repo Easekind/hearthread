@@ -13,6 +13,12 @@
 
 Bun 和 Cargo 分别通过 `bun.lock` 和 `Cargo.lock` 锁定依赖版本。Bun 版本在 `package.json` 的 `packageManager` 中指定，CI 按此版本执行冻结安装。项目级 `.npmrc` 指定公共注册表，保证本地和 CI 使用同一依赖来源。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。
 
+## 界面语言
+
+项目按语言维护翻译资源，使用 i18next 27.2.7 处理插值和复数。英文和简体中文词典随前端打包，首次打开固定为英文。React 已订阅书库偏好，切换时复用这条更新路径。读者偏好提交后更新翻译语言、文档语言和窗口标题。启动和恢复 ZIP 备份共用同一份偏好。[i18next](https://github.com/i18next/i18next)
+
+新增界面文案时同步维护 `src/i18n/en.json` 和 `src/i18n/zh-CN.json`，按钮、无障碍名称、通知和错误使用相同的翻译入口。数量用 `count` 选择复数形式，带书名或文件名的消息使用命名占位符。书籍正文、目录、元数据和用户命名保留原文，内置分类只翻译显示名称。Rust 返回的已知书库操作错误在 IPC 适配器中翻译。
+
 ## 读写路径
 
 `src/storage/files.ts` 定义与位置无关的 `LibraryFiles`。应用通过 `put` 提交不可变内容并取得 SHA-256 键，通过 `url` 获取有释放方法的读取句柄；`records` 和 `commit` 管理带修订号的记录。书目、备份与阅读位置只持有逻辑键。原生适配器调用 Rust，浏览器适配器使用 IndexedDB。
