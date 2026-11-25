@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -8,13 +9,18 @@ import {
 } from "react";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import {
+  systemFontOptions,
+  readingFontFamily,
+  typeLimits,
+} from "../reader/typography";
 import { Slider } from "./slider";
 export { Button } from "./button";
 import icons from "./icons.json";
 import { files } from "../storage/files";
 import wordmark from "./wordmark.svg?raw";
 import jackets from "../library/jackets.json";
-import type { Book, Paper, Preferences } from "../model";
+import type { Book, Preferences, Theme } from "../model";
 export function Icon({ name }: { name: string }) {
   return (
     <svg
@@ -272,25 +278,37 @@ export function Modal({
     </DialogPrimitive.Root>
   );
 }
-export const papers = { light: "素白", paper: "暖纸", dark: "墨夜" };
-export function Papers({
+const themeLabels: Record<Theme, string> = {
+  light: "素白",
+  paper: "暖纸",
+  dark: "墨夜",
+  system: "跟随系统",
+};
+export function Papers<T extends Theme>({
   value,
+  options,
+  label,
   change,
 }: {
-  value: Paper;
-  change: (p: Paper) => void;
+  value: T;
+  options: readonly T[];
+  label: string;
+  change: (p: T) => void;
 }) {
   return (
-    <div className="paper-choices">
-      {(Object.keys(papers) as Paper[]).map((p) => (
+    <div className="paper-choices" role="group" aria-label={label}>
+      {options.map((p) => (
         <button
+          type="button"
           className="paper-choice"
           aria-pressed={value === p}
           key={p}
           onClick={() => change(p)}
         >
-          <span className={"paper-sample " + p}>Aa</span>
-          <span>{papers[p]}</span>
+          <span className={"paper-sample " + p} aria-hidden="true">
+            {p === "system" ? <Icon name="monitor" /> : "Aa"}
+          </span>
+          <span>{themeLabels[p]}</span>
           {value === p && <Icon name="check" />}
         </button>
       ))}
@@ -299,47 +317,72 @@ export function Papers({
 }
 export function TypeControls({
   prefs,
+  customFontName,
   change,
-  latin = false,
 }: {
   prefs: Preferences;
+  customFontName: string;
   change: (p: Partial<Preferences>) => void;
-  latin?: boolean;
 }) {
-  const faces = {
-    serif: "衬线",
-    sans: "无衬线",
-    ...(prefs.customFont ? { custom: "自定义字体" } : {}),
-  };
+  const key = prefs.customFont;
+  const fonts = useMemo(
+    () => ({
+      default: "系统默认",
+      ...systemFontOptions(prefs.fontCategory),
+      ...(key
+        ? {
+            custom: customFontName
+              ? customFontName + "（已导入）"
+              : "自定义字体",
+          }
+        : {}),
+    }),
+    [prefs.fontCategory, key, customFontName],
+  );
   return (
     <div className="type-controls">
-      {(["chinese", ...(latin ? ["latin"] : [])] as const).map((key) => (
-        <div key={key} className="face-row">
-          <span>{key === "latin" ? "西文字体" : "中文字体"}</span>
-          <Select
-            label={key === "latin" ? "西文字体" : "中文字体"}
-            options={faces}
-            value={prefs[key as "chinese" | "latin"]}
-            change={(v) => change({ [key]: v })}
-          />
-        </div>
-      ))}
+      <div className="face-row">
+        <span>字体类别</span>
+        <Select
+          label="字体类别"
+          options={{ serif: "衬线", sans: "无衬线" }}
+          value={prefs.fontCategory}
+          change={(category) => {
+            if (
+              (category === "serif" || category === "sans") &&
+              category !== prefs.fontCategory
+            )
+              change({ fontCategory: category, fontFamily: "default" });
+          }}
+        />
+      </div>
+      <div className="face-row">
+        <span>字体</span>
+        <Select
+          label="字体"
+          options={fonts}
+          value={
+            Object.hasOwn(fonts, prefs.fontFamily)
+              ? prefs.fontFamily
+              : "default"
+          }
+          change={(fontFamily) => change({ fontFamily })}
+        />
+      </div>
       {(
         [
           {
             key: "size",
             label: "字号",
             unit: " px",
-            min: 16,
-            max: 30,
+            ...typeLimits.size,
             step: 1,
           },
           {
             key: "leading",
             label: "行距",
             unit: " 倍",
-            min: 1.5,
-            max: 2.4,
+            ...typeLimits.leading,
             step: 0.05,
           },
         ] as const
@@ -362,16 +405,5 @@ export const typeStyle = (prefs: Preferences) =>
   ({
     "--reader-size": prefs.size + "px",
     "--reader-leading": prefs.leading,
-    "--reading-face":
-      (prefs.latin === "custom"
-        ? "UserReading"
-        : prefs.latin === "serif"
-          ? "Georgia"
-          : "Arial") +
-      ", " +
-      (prefs.chinese === "custom"
-        ? "UserReading"
-        : prefs.chinese === "serif"
-          ? "var(--font-reading)"
-          : "var(--font-ui)"),
+    "--reading-face": readingFontFamily(prefs),
   }) as CSSProperties;

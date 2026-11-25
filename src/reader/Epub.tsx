@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { readingFontFamily } from "./typography";
 import { openExternal } from "./links";
 import { files } from "../storage/files";
 import {
@@ -20,25 +21,13 @@ export default function Epub(props: EngineProps) {
       room = host.current?.closest(".reader");
     if (!room) return;
     const computed = getComputedStyle(room);
-    const face =
-      prefs.chinese === "custom"
-        ? "UserReading, serif"
-        : prefs.chinese === "serif"
-          ? "Songti SC, serif"
-          : "system-ui, sans-serif";
     view.current?.renderer?.setStyles?.(
       "html,body {color:" +
         computed.getPropertyValue("--reader-ink") +
         "!important;background:" +
         computed.getPropertyValue("--reader-paper") +
         "!important} body,p,li,blockquote{font-family:" +
-        (prefs.latin === "custom"
-          ? "UserReading"
-          : prefs.latin === "serif"
-            ? "Georgia"
-            : "Arial") +
-        "," +
-        face +
+        readingFontFamily(prefs) +
         "!important;font-size:" +
         prefs.size +
         "px!important;line-height:" +

@@ -3,14 +3,16 @@ import {
   lazy,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import type { Book, Preferences } from "../model";
-import { defaults } from "../model";
+import { defaults, themeOptions, type Book, type Preferences } from "../model";
 import { EngineBoundary } from "./EngineBoundary";
 import { bookSource, patchBooks, patchPrefs } from "../storage/catalog";
 import { Icon, Papers, Tool, TypeControls, typeStyle } from "../ui/controls";
+import { useCustomFontName } from "../ui/useCustomFontName";
+import { useResolvedTheme } from "../ui/useResolvedTheme";
 import { Slider } from "../ui/slider";
 import type { Destination, Position, ReaderEngine } from "./engine";
 const Epub = lazy(() => import("./Epub")),
@@ -189,9 +191,11 @@ export default function Reader({
         : TextDocument
     : TextDocument;
   const Engine = component;
+  const paper = useResolvedTheme(prefs.paper);
+  const enginePrefs = useMemo(() => ({ ...prefs, paper }), [prefs, paper]);
   const props = {
     book: initial,
-    prefs,
+    prefs: enginePrefs,
     source,
     wide,
     position,
@@ -206,8 +210,17 @@ export default function Reader({
   };
   const epub = book.type === "EPUB",
     pdf = book.type === "PDF";
+  const customFontName = useCustomFontName(
+    panel === "type" && !pdf ? prefs.customFont : undefined,
+  );
   const heading =
-    panel === "toc" ? "目录" : panel === "type" ? "阅读排版" : "书内搜索";
+    panel === "toc"
+      ? "目录"
+      : panel === "type"
+        ? pdf
+          ? "阅读纸色"
+          : "阅读排版"
+        : "书内搜索";
   function go(t: string | number) {
     engine.current?.go(t);
     setPanel("");
@@ -224,7 +237,7 @@ export default function Reader({
     >
       <main
         className={"reader reading-room " + (tools || error ? "" : "is-focus")}
-        data-paper={prefs.paper}
+        data-paper={paper}
         data-pdf-wide={wide}
         style={typeStyle(prefs)}
       >
@@ -342,16 +355,10 @@ export default function Reader({
           </div>
           <Tool
             className="room-tool"
-            label={pdf ? "切换明暗主题" : "阅读排版"}
-            aria-expanded={pdf ? undefined : panel === "type"}
-            symbol={pdf ? (prefs.paper === "dark" ? "sun" : "moon") : "type"}
-            onClick={() =>
-              pdf
-                ? void patchPrefs({
-                    paper: prefs.paper === "dark" ? "light" : "dark",
-                  })
-                : selectPanel("type")
-            }
+            label={pdf ? "阅读纸色" : "阅读排版"}
+            aria-expanded={panel === "type"}
+            symbol={pdf ? "sun" : "type"}
+            onClick={() => selectPanel("type")}
           />
         </footer>
         {panel && (
@@ -366,25 +373,35 @@ export default function Reader({
             </div>
             {panel === "type" ? (
               <>
-                <TypeControls prefs={prefs} change={patchPrefs} />
+                {!pdf && (
+                  <TypeControls
+                    prefs={prefs}
+                    customFontName={customFontName}
+                    change={patchPrefs}
+                  />
+                )}
                 <Papers
+                  label="阅读纸色"
+                  options={themeOptions}
                   value={prefs.paper}
                   change={(paper) => void patchPrefs({ paper })}
                 />
-                <button
-                  className="reset-reading"
-                  onClick={() =>
-                    void patchPrefs({
-                      size: defaults.size,
-                      leading: defaults.leading,
-                      chinese: "serif",
-                      latin: "serif",
-                      paper: "light",
-                    })
-                  }
-                >
-                  恢复默认排版
-                </button>
+                {!pdf && (
+                  <button
+                    className="reset-reading"
+                    onClick={() =>
+                      void patchPrefs({
+                        size: defaults.size,
+                        leading: defaults.leading,
+                        fontCategory: defaults.fontCategory,
+                        fontFamily: defaults.fontFamily,
+                        paper: "light",
+                      })
+                    }
+                  >
+                    恢复默认排版
+                  </button>
+                )}
               </>
             ) : panel === "toc" ? (
               <div className="contents-list">

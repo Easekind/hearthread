@@ -40,7 +40,12 @@ export async function loadCatalog() {
         ...books.get(value.id),
         ...value,
       });
-    if (row.key === profile + "settings") Object.assign(prefs, value);
+    if (row.key === profile + "settings") {
+      for (const [key, setting] of Object.entries(value)) {
+        if (Object.hasOwn(defaults, key))
+          Object.assign(prefs, { [key]: setting });
+      }
+    }
     if (row.key === "folders") folders = value;
   }
   for (const row of rows) {

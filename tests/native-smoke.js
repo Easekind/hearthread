@@ -48,6 +48,33 @@
     await until(() => query(".book-wall"), "library");
     const initial = await ipc("catalog");
     await note("catalog " + initial.length);
+    await click('button[title="设置"]');
+    (await until(() => button("阅读排版"), "reading preferences")).click();
+    if (!initial.length) {
+      const fontInput = await until(
+        () => query('input[accept=".otf,.ttf,.woff2"]'),
+        "font import",
+      );
+      const fontFiles = new DataTransfer();
+      fontFiles.items.add(
+        new File(
+          [await (await fetch("/design/font-1.ttf")).blob()],
+          "sample.ttf",
+        ),
+      );
+      fontInput.files = fontFiles.files;
+      fontInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    await until(
+      () => query('button[aria-label="字体，Sora（已导入）"]'),
+      "selected font family",
+    );
+    await until(
+      () => query(".setting-row")?.textContent.includes("Sora"),
+      "imported font family",
+    );
+    await click('button[aria-label="关闭面板"]');
+    log.push("imported Sora is identified in native typography settings");
     if (initial.length) {
       const saved = initial.find(
         (r) =>

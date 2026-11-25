@@ -370,7 +370,9 @@ body{font-optical-sizing:auto;letter-spacing:normal}
 
 .dock-cover{flex:none;border-radius:2px;box-shadow:0 2px 4px #0002}.dock-book{gap:12px}.dock-book strong{font-size:.875rem;font-weight:620}
 .wall-select:active .wall-object{scale:.975}.nav-item:active,.view-switch button:active,.read-button:active{scale:.97}
-.library-drawer{border-radius:22px}.sheet-grab{display:none}.library-scrim{background:rgba(23,22,20,.23)}
+:root {--sheet-shade:rgb(23 22 20 / calc(.23 * var(--sheet-opacity,1)))}
+.library-drawer{border-radius:22px;overscroll-behavior:contain}.sheet-grab{display:none}
+.library-scrim{background:var(--sheet-shade);overflow:hidden;overscroll-behavior:contain;touch-action:none}
 @media(max-width:900px){.studio.nav-open .studio-nav{width:244px;top:8px;bottom:8px;left:8px}.studio.nav-open .brand-wordmark{max-width:132px}.studio-search{margin-left:auto}.reading-dock{width:min(590px,calc(100% - 32px))}}
 @media(max-width:600px){
  .studio-topbar{height:64px}.topbar-left{margin:0}.heading-name h1{font-size:1.875rem}.studio-heading{margin-bottom:12px}
@@ -467,15 +469,15 @@ body{font-optical-sizing:auto;letter-spacing:normal}
   .studio.nav-open .nav-main {margin-top:24px}
 }
 /* The reader scrolls independently of the library beneath it. */
-html:has(.reading-layer) {overflow:hidden;scrollbar-width:none}
-.reading-layer {overscroll-behavior:contain}
-.reading-layer,.reading-layer * {scrollbar-width:none}
-html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.reading-layer *::-webkit-scrollbar {display:none}
+.reading-layer {--reader-paper:#fcfbf8;overscroll-behavior:contain;background:var(--reader-paper)}
+.reading-layer:has(> .reading-room[data-paper=paper]) {--reader-paper:#f5efdf}
+.reading-layer:has(> .reading-room[data-paper=dark]) {--reader-paper:#202220}
+.reading-room[data-paper] {--reader-paper:inherit}
 
 /* Reading paper and the two layers above it: controls and popovers. */
-.reading-room {--reader-paper:#fcfbf8;--reader-ink:#252621;--room-muted:#62645e;--room-line:#d9dad3;--room-control:#f2f1ec;--room-accent:#a4402f;--color-muted:var(--room-muted);--color-ink:var(--reader-ink);--color-paper:var(--reader-paper);--color-paper-2:var(--room-control);min-height:100dvh;background:var(--reader-paper);color:var(--reader-ink);font-family:var(--font-ui)}
-.reading-room[data-paper=paper] {--reader-paper:#f5efdf;--reader-ink:#3a332a;--room-muted:#696254;--room-line:#d9cfba;--room-control:#eae2ce}
-.reading-room[data-paper=dark] {--reader-paper:#202220;--reader-ink:#e6e7df;--room-muted:#b6b9af;--room-line:#484b44;--room-control:#30332e;--room-accent:#ff9981;color-scheme:dark}
+.reading-room {--reader-ink:#252621;--room-muted:#62645e;--room-line:#d9dad3;--room-control:#f2f1ec;--room-accent:#a4402f;--color-muted:var(--room-muted);--color-ink:var(--reader-ink);--color-paper:var(--reader-paper);--color-paper-2:var(--room-control);min-height:100dvh;background:var(--reader-paper);color:var(--reader-ink);font-family:var(--font-ui)}
+.reading-room[data-paper=paper] {--reader-ink:#3a332a;--room-muted:#696254;--room-line:#d9cfba;--room-control:#eae2ce}
+.reading-room[data-paper=dark] {--reader-ink:#e6e7df;--room-muted:#b6b9af;--room-line:#484b44;--room-control:#30332e;--room-accent:#ff9981;color-scheme:dark}
 .room-head {height:4.5rem;position:sticky;top:0;z-index:5;padding:0 clamp(1rem,4vw,4rem);display:grid;grid-template-columns:1fr minmax(0,50%) 1fr;align-items:center;background:color-mix(in srgb,var(--reader-paper) 89%,transparent);backdrop-filter:blur(16px)}
 .room-actions {display:flex;justify-content:flex-end;gap:4px}.room-identity {text-align:center;min-width:0}
 .room-identity strong,.room-identity small {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -515,34 +517,20 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 .book-progress span {display:block;width:var(--progress);height:100%;background:var(--range-ink)}
 /* shadcn/ui controls use the ink and paper of their current surface. */
 .preferences {--range-rail:color-mix(in srgb,var(--color-ink) 24%,var(--selected-nav))}
-[data-slot=switch],[data-slot=slider] {overflow:visible}
-[data-slot=switch] {
-  position:relative;display:inline-flex;flex:none;align-items:center;width:32px;height:19px;
-  padding:0 1px;border:1px solid transparent;border-radius:999px;background:var(--range-rail)
-}
-[data-slot=switch]::after {content:"";position:absolute;inset:-13px -6px}
-[data-slot=switch][aria-checked=true] {background:var(--color-ink)}
-[data-slot=switch-thumb] {
-  width:15px;height:15px;border-radius:50%;background:var(--solid-material);
-  box-shadow:0 1px 3px #0003;pointer-events:none;transition:transform 150ms ease-out
-}
-[data-slot=switch][aria-checked=true] [data-slot=switch-thumb] {transform:translateX(13px)}
-[data-slot=slider] {display:flex;position:relative;align-items:center;touch-action:none;user-select:none;cursor:pointer;background:transparent}
+[data-slot=slider] {overflow:visible;display:flex;position:relative;align-items:center;touch-action:none;user-select:none;cursor:pointer;background:transparent}
 [data-slot=slider-track] {position:relative;flex:1;height:6px;border-radius:999px;background:var(--range-rail);overflow:hidden}
 [data-slot=slider-range] {position:absolute;height:100%;background:var(--color-ink)}
 [data-slot=slider-thumb] {
   display:block;box-sizing:border-box;width:16px;height:16px;border-radius:50%;border:1px solid var(--color-ink);
   background:var(--color-paper);box-shadow:0 1px 3px #0002
 }
-[data-slot=switch]:focus-visible,[data-slot=slider-thumb]:focus-visible {outline:2px solid var(--color-ink);outline-offset:3px}
+[data-slot=slider-thumb]:focus-visible {outline:2px solid var(--color-ink);outline-offset:3px}
 @media (hover:hover) and (pointer:fine) {
-  [data-slot=switch]:enabled:hover {background:color-mix(in srgb,var(--color-ink) var(--hover-tint),var(--range-rail))}
-  [data-slot=switch][aria-checked=true]:hover {background:color-mix(in srgb,var(--color-paper) var(--hover-tint),var(--color-ink))}
   [data-slot=slider-thumb]:hover {box-shadow:0 0 0 4px var(--range-rail)}
 }
 @media (forced-colors:active) {
-  [data-slot=slider-track],[data-slot=switch] {border:1px solid ButtonText}
-  [data-slot=slider-range],[data-slot=switch-thumb] {background:ButtonText}
+  [data-slot=slider-track] {border:1px solid ButtonText}
+  [data-slot=slider-range] {background:ButtonText}
 }
 /* The standalone edition uses a native range input for the same slider. */
 @media (forced-colors:none) {
@@ -563,6 +551,9 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 }
 .type-slider output {color:var(--room-muted,var(--color-muted));font-variant-numeric:tabular-nums}
 .paper-choices {display:flex;gap:6px;margin:17px 0}.paper-choice {flex:1;display:flex;align-items:center;justify-content:center;gap:5px;min-height:42px;border:1px solid var(--room-line,var(--material-edge));border-radius:10px;color:inherit;font-size:.78rem;background:transparent}
+.room-panel .paper-choices {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.preferences .paper-choices {display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.paper-sample.system {background:var(--color-paper-2);color:var(--color-ink)}
 .paper-choice[aria-pressed=true] {border-color:currentColor}.paper-choice svg {width:12px!important;height:12px!important}
 .paper-sample {display:grid;place-items:center;width:25px;height:25px;border-radius:6px;font:14px Georgia,serif;box-shadow:inset 0 0 0 1px #7773}
 .paper-sample.light {background:#fcfbf8;color:#252621}.paper-sample.paper {background:#f5efdf;color:#3a332a}.paper-sample.dark {background:#202220;color:#e6e7df}
@@ -596,9 +587,10 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 .pref-rows {padding:0 14px;border-radius:13px;border:1px solid var(--material-edge);background:var(--selected-nav)}.pref-rows .setting-row {min-height:55px;padding:10px 0;border:0;font-size:.85rem}.pref-rows .setting-row+.setting-row {border-top:1px solid var(--material-edge)}
 .pref-rows .setting-row small {overflow-wrap:anywhere}.pref-action,.pref-rows .key {flex:none;border-radius:8px;background:var(--color-paper-2);padding:7px 10px;color:var(--color-ink);font-size:.78rem}
 .pref-rows .type-controls {padding:14px 0}.type-specimen {padding:19px 22px;background:var(--color-paper-2);border-radius:13px}
-.type-specimen p {font:var(--reader-size)/var(--reader-leading) var(--reading-face);margin-top:8px}.type-specimen p[lang=en] {font-size:calc(var(--reader-size) * .88)}
+.type-specimen p {font:var(--reader-size)/var(--reader-leading) var(--reading-face);margin-top:8px}
 .product-signature {display:grid;justify-items:start;gap:8px;padding-block:16px}.product-signature>svg {fill:var(--brand-thread);stroke:none;width:40px!important;height:40px!important}.product-signature strong {font:600 1.8rem var(--font-ui);letter-spacing:-.06em}.product-signature small {color:var(--color-muted)}
 @media(max-width:600px){
+ .preferences .paper-choices {grid-template-columns:repeat(2,minmax(0,1fr))}
  .room-head {height:3.7rem;padding-inline:8px;grid-template-columns:1fr minmax(0,42%) 1fr}.room-actions {gap:0}.room-actions button {padding:0}.room-back span {display:none}
  .room-dock {bottom:max(10px,env(safe-area-inset-bottom));gap:3px}.room-panel {bottom:max(78px,calc(env(safe-area-inset-bottom) + 68px))}.room-panel.panel-search {top:60px;right:12px}
  .reading-room .reading-content {padding:2.1rem 1.35rem 7rem}.reading-room .reading-content h1 {margin-bottom:1em}
@@ -624,6 +616,34 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
   --dialog-time:200ms;
   --book-time:240ms;
 }
+
+/* The thumb paints inside a wider native drag target. */
+html,body {scrollbar-color:auto}
+html:has(.modal-backdrop,.reading-layer) {overflow:hidden}
+@media (pointer:fine) and (forced-colors:none) {
+  :root,.reading-layer {--scrollbar-ink:40 43 48}
+  :root:has(body.theme-dark),.reading-layer:has(.reading-room[data-paper=dark]) {--scrollbar-ink:228 230 234}
+
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar {width:16px;height:16px;background:transparent}
+    ::-webkit-scrollbar-track,::-webkit-scrollbar-corner {background:transparent}
+    :is(html,body):has(.library-scrim)::-webkit-scrollbar-track {background:var(--sheet-shade)}
+    ::-webkit-scrollbar-button {display:none}
+    ::-webkit-scrollbar-thumb {
+      border:2px solid transparent;background:rgb(var(--scrollbar-ink) / .32) padding-box
+    }
+    ::-webkit-scrollbar-thumb:vertical {border-left-width:10px;border-radius:12px 4px 4px 12px / 4px}
+    ::-webkit-scrollbar-thumb:horizontal {border-top-width:10px;border-radius:4px / 12px 12px 4px 4px}
+    ::-webkit-scrollbar-thumb:hover {background-color:rgb(var(--scrollbar-ink) / .48)}
+    ::-webkit-scrollbar-thumb:active {background-color:rgb(var(--scrollbar-ink) / .64)}
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    * {scrollbar-width:thin}
+    html,body,.reading-layer {scrollbar-color:rgb(var(--scrollbar-ink) / .42) transparent}
+    :is(html,body):has(.library-scrim) {scrollbar-color:rgb(var(--scrollbar-ink) / .42) var(--sheet-shade)}
+  }
+}
+
 .ui-glyph {stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 [data-action=toggle-nav][aria-expanded=true] .sidebar-pane {fill:currentColor}
 .ui-glyph[data-symbol=more] {fill:currentColor;stroke-width:1}
@@ -728,6 +748,7 @@ html[data-input=keyboard] .list-view tbody tr:has(:focus-visible) {background:va
 /* Form selections share the library category trigger and its anchored menu. */
 .menu.library-popup[popover] {inset:auto;margin:0}
 .field-trigger {min-width:6.25rem;max-width:min(60%,18rem);justify-content:space-between}
+.face-row .field-trigger span {min-width:0;white-space:normal;overflow-wrap:anywhere}
 .destination .field-trigger {margin-inline-start:auto}
 .reading-room .field-trigger {color:var(--reader-ink)}
 .reading-room .field-trigger[aria-expanded=true] {background:var(--room-control)}
@@ -776,7 +797,7 @@ html[data-input=pointer] .library-popup button:focus {outline:none}
   .room-search input,.studio-search {min-width:0}
   .paper-choice,.reset-reading,.pref-action,.library-dialog .modal-actions button,.type-slider [data-slot=slider] {min-height:44px}
   .library-popup,.modal,.file-review ul {overscroll-behavior:contain}
-  html:has(.studio.nav-open,.modal-backdrop:not([inert])) {overflow:hidden}
+  html:has(.studio.nav-open,.library-scrim) {overflow:hidden}
   .view-switch button {min-height:44px}
 }
 

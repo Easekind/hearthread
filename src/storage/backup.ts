@@ -3,10 +3,10 @@ import { z } from "zod";
 import { files } from "./files";
 import { catalog, update } from "./catalog";
 import { saveFile } from "./transfer";
-import { defaults, type Catalog } from "../model";
+import { defaults, themeOptions, type Catalog } from "../model";
+import { isSystemFont, typeLimits } from "../reader/typography";
 import edition from "../library/edition.json";
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
-const paper = z.enum(["light", "paper", "dark"]);
 const text = z.string(),
   numeric = z.number().finite();
 const book = z
@@ -40,24 +40,29 @@ const book = z
             sample.type === b.type,
         ),
   );
-const font = z.enum(["serif", "sans", "custom"]);
+const backupVersion = 2;
 const schema = z.object({
-  version: z.literal(1),
+  version: z.literal(backupVersion),
   books: z.array(book),
   folders: z.array(text).min(1),
-  prefs: z.object({
-    theme: paper,
-    paper: paper,
-    size: numeric.min(16).max(30),
-    leading: numeric.min(1.5).max(2.4),
-    chinese: font,
-    latin: font,
-    system: z.boolean(),
-    view: z.enum(["grid", "list"]),
-    sort: z.enum(["recent", "added", "title"]),
-    customFont: digest.optional(),
-    tint: text.regex(/^#[0-9a-f]{6}$/i).optional(),
-  }),
+  prefs: z
+    .object({
+      theme: z.enum(themeOptions),
+      paper: z.enum(themeOptions),
+      size: numeric.min(typeLimits.size.min).max(typeLimits.size.max),
+      leading: numeric.min(typeLimits.leading.min).max(typeLimits.leading.max),
+      fontCategory: z.enum(["serif", "sans"]),
+      fontFamily: text,
+      view: z.enum(["grid", "list"]),
+      sort: z.enum(["recent", "added", "title"]),
+      customFont: digest.optional(),
+    })
+    .refine(
+      (p) =>
+        p.fontFamily === "default" ||
+        (p.fontFamily === "custom" && !!p.customFont) ||
+        isSystemFont(p.fontCategory, p.fontFamily),
+    ),
 });
 const keys = (s: Catalog) =>
   new Set(
@@ -68,7 +73,9 @@ const keys = (s: Catalog) =>
 export async function backup() {
   const snapshot = catalog.get(),
     entries: Record<string, Uint8Array> = {
-      "catalog.json": strToU8(JSON.stringify({ version: 1, ...snapshot })),
+      "catalog.json": strToU8(
+        JSON.stringify({ version: backupVersion, ...snapshot }),
+      ),
     };
   for (const key of keys(snapshot)) {
     const object = await files.url(key);

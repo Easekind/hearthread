@@ -38,7 +38,9 @@ body{font-optical-sizing:auto;letter-spacing:normal}
 
 .dock-cover{flex:none;border-radius:2px;box-shadow:0 2px 4px #0002}.dock-book{gap:12px}.dock-book strong{font-size:.875rem;font-weight:620}
 .wall-select:active .wall-object{scale:.975}.nav-item:active,.view-switch button:active,.read-button:active{scale:.97}
-.library-drawer{border-radius:22px}.sheet-grab{display:none}.library-scrim{background:rgba(23,22,20,.23)}
+:root {--sheet-shade:rgb(23 22 20 / calc(.23 * var(--sheet-opacity,1)))}
+.library-drawer{border-radius:22px;overscroll-behavior:contain}.sheet-grab{display:none}
+.library-scrim{background:var(--sheet-shade);overflow:hidden;overscroll-behavior:contain;touch-action:none}
 @media(max-width:900px){.studio.nav-open .studio-nav{width:244px;top:8px;bottom:8px;left:8px}.studio.nav-open .brand-wordmark{max-width:132px}.studio-search{margin-left:auto}.reading-dock{width:min(590px,calc(100% - 32px))}}
 @media(max-width:600px){
  .studio-topbar{height:64px}.topbar-left{margin:0}.heading-name h1{font-size:1.875rem}.studio-heading{margin-bottom:12px}

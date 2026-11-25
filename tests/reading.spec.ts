@@ -78,6 +78,38 @@ test("EPUB repagination, contents and CFI resume", async ({ page }) => {
   const body = page.frameLocator("foliate-view iframe").first().locator("body");
   await expect(body).toContainText("林间的清晨");
   await tools(page);
+  await page.getByRole("button", { name: "阅读排版", exact: true }).click();
+  await page.getByRole("button", { name: "字体类别，衬线" }).click();
+  await page.getByRole("menuitemradio", { name: "无衬线" }).click();
+  await page.getByRole("button", { name: "字体，系统默认" }).click();
+  const option = page.getByRole("menuitemradio").nth(1);
+  const label = (await option.innerText()).trim();
+  await option.click();
+  await expect(
+    page.getByRole("button", { name: "字体，" + label }),
+  ).toBeVisible();
+  const readerFamily = await page
+    .locator(".reading-room")
+    .evaluate((room) =>
+      getComputedStyle(room).getPropertyValue("--reading-face").trim(),
+    );
+  await expect(body).toHaveCSS(
+    "font-family",
+    await page.evaluate((family) => {
+      const el = document.createElement("span");
+      el.style.fontFamily = family;
+      return el.style.fontFamily;
+    }, readerFamily),
+  );
+  await page.getByRole("slider", { name: "字号" }).press("Home");
+  await page.getByRole("slider", { name: "行距" }).press("Home");
+  await expect(body.locator("p").first()).toHaveCSS("line-height", "12px");
+  await page.getByRole("button", { name: "跟随系统" }).click();
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(body).toHaveCSS("background-color", "rgb(32, 34, 32)");
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(body).toHaveCSS("background-color", "rgb(252, 251, 248)");
+  await page.getByRole("button", { name: "关闭阅读排版" }).click();
   await page.getByRole("button", { name: "目录", exact: true }).click();
   await page
     .locator(".contents-list button")
@@ -109,6 +141,25 @@ test("PDF opens original page, text layer and page search", async ({
     .dblclick();
   await expect(page.locator(".textLayer")).toContainText("Architecture");
   await tools(page);
+  await page.getByRole("button", { name: "阅读纸色", exact: true }).click();
+  await page.getByRole("button", { name: "跟随系统" }).click();
+  await page.emulateMedia({ colorScheme: "dark" });
+  const canvas = page.locator(".pdf-sheet canvas");
+  await expect(canvas).not.toHaveCSS("filter", "none");
+  await expect(page.locator("body")).not.toHaveClass(/theme-dark/);
+  await page.reload();
+  await expect(canvas).not.toHaveCSS("filter", "none");
+  await tools(page);
+  await page.getByRole("button", { name: "阅读纸色", exact: true }).click();
+  await expect(page.getByRole("button", { name: "跟随系统" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "暖纸" }).click();
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator(".reader")).toHaveAttribute("data-paper", "paper");
+  await expect(canvas).toHaveCSS("filter", "none");
+  await page.getByRole("button", { name: "关闭阅读纸色" }).click();
   await page.getByRole("button", { name: "书内搜索", exact: true }).click();
   await page.getByLabel("搜索本书").fill("Architecture");
   await expect(page.locator("#book-results button").first()).toContainText(

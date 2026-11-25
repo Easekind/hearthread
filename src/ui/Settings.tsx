@@ -16,10 +16,16 @@ import {
   TypeControls,
   typeStyle,
 } from "./controls";
-import { Switch } from "./switch";
-import type { Catalog } from "../model";
+import { isTauri } from "@tauri-apps/api/core";
+import {
+  fontExtensions,
+  importFontFile,
+  pickNativeFont,
+} from "../storage/readingFont";
+import { themeOptions, type Catalog } from "../model";
 import { patchPrefs } from "../storage/catalog";
 import { files } from "../storage/files";
+import { useCustomFontName } from "./useCustomFontName";
 import { useSheet } from "./useSheet";
 import type { Notify } from "../library/Dialogs";
 const StorageDetails = lazy(() => import("./StorageDetails"));
@@ -81,11 +87,14 @@ export function Settings({
     [path, setPath] = useState(""),
     [licenses, setLicenses] = useState(""),
     [busy, setBusy] = useState(false);
-  const { drawer, scrim, dismiss, handle } = useSheet(close);
+  const { drawer, dismiss, handle } = useSheet(close);
   const restore = useRef<HTMLInputElement>(null),
     font = useRef<HTMLInputElement>(null);
   const p = data.prefs,
     mod = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
+  const customFontName = useCustomFontName(
+    tab === "reading" ? p.customFont : undefined,
+  );
   useEffect(() => {
     void files.location().then(setPath);
   }, []);
@@ -134,7 +143,7 @@ export function Settings({
   }
   return (
     <>
-      <div className="library-scrim" ref={scrim} onClick={dismiss} />
+      <div className="library-scrim" onClick={dismiss} />
       <section
         className="library-drawer layer-scroll"
         ref={drawer}
@@ -215,27 +224,11 @@ export function Settings({
                     </div>
                   </div>
                   <Papers
+                    label="书库外观"
+                    options={themeOptions}
                     value={p.theme}
-                    change={(theme) =>
-                      void patchPrefs({ theme, system: false })
-                    }
+                    change={(theme) => void patchPrefs({ theme })}
                   />
-                  <Group title="显示">
-                    <Row name="跟随系统外观">
-                      <Switch
-                        aria-label="跟随系统外观"
-                        checked={p.system}
-                        onCheckedChange={(system) =>
-                          void patchPrefs({ system })
-                        }
-                      />
-                    </Row>
-                  </Group>
-                  <Group>
-                    <Row name="自定义主题">
-                      {action("添加主题", () => setSub("自定义主题"))}
-                    </Row>
-                  </Group>
                 </>
               )}
               {tab === "reading" && (
@@ -250,32 +243,34 @@ export function Settings({
                     <p lang="en">Morning light on the water.</p>
                   </article>
                   <Group title="正文">
-                    <TypeControls prefs={p} change={patchPrefs} latin />
+                    <TypeControls
+                      prefs={p}
+                      customFontName={customFontName}
+                      change={patchPrefs}
+                    />
                   </Group>
                   <Group>
-                    <Row name="自定义字体" detail="OTF、TTF、WOFF2">
-                      {action("导入字体", () => font.current?.click())}
+                    <Row
+                      name={customFontName || "自定义字体"}
+                      detail="OTF、TTF、WOFF2"
+                    >
+                      {action(p.customFont ? "更换字体" : "导入字体", () => {
+                        if (isTauri())
+                          void transfer(pickNativeFont, "已应用字体");
+                        else font.current?.click();
+                      })}
                     </Row>
                   </Group>
                   <input
                     ref={font}
                     type="file"
                     hidden
-                    accept=".otf,.ttf,.woff2"
+                    accept={fontExtensions.map((ext) => "." + ext).join(",")}
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
+                      const file = e.currentTarget.files?.[0];
+                      e.currentTarget.value = "";
                       if (file)
-                        void transfer(async () => {
-                          await new FontFace(
-                            "Check",
-                            await file.arrayBuffer(),
-                          ).load();
-                          await patchPrefs({
-                            customFont: await files.put(file),
-                            chinese: "custom",
-                            latin: "custom",
-                          });
-                        }, "已应用字体");
+                        void transfer(() => importFontFile(file), "已应用字体");
                     }}
                   />
                 </>
@@ -382,15 +377,6 @@ export function Settings({
             <Suspense>
               <StorageDetails books={data.books} path={path} />
             </Suspense>
-          ) : sub === "自定义主题" ? (
-            <label className="face-row">
-              书库强调色
-              <input
-                type="color"
-                value={p.tint ?? "#b94330"}
-                onChange={(e) => void patchPrefs({ tint: e.target.value })}
-              />
-            </label>
           ) : (
             <pre className="whitespace-pre-wrap">{licenses}</pre>
           )}

@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { catalog, patchBooks, patchPrefs } from "./storage/catalog";
+import { useResolvedTheme } from "./ui/useResolvedTheme";
 import { Brand, Icon, Tool, useObjectUrl } from "./ui/controls";
 import { Shelf, type Action } from "./library/Shelf";
 import { LibraryDialog, type Notify } from "./library/Dialogs";
@@ -110,29 +111,21 @@ export default function App() {
     media.addEventListener("change", change);
     return () => media.removeEventListener("change", change);
   }, []);
+  const theme = useResolvedTheme(data.prefs.theme);
   useLayoutEffect(() => {
-    const media = matchMedia("(prefers-color-scheme:dark)");
-    function theme() {
-      const p = data.prefs;
-      const t = p.system ? (media.matches ? "dark" : "light") : p.theme;
-      document.body.className = [
-        t === "light" ? "" : "theme-" + t,
-        layer ? "has-library-layer" : "",
-      ].join(" ");
-      document.body.style.setProperty("--brand-thread", p.tint ?? "");
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute(
-          "content",
-          getComputedStyle(document.body)
-            .getPropertyValue("--color-paper")
-            .trim(),
-        );
-    }
-    theme();
-    media.addEventListener("change", theme);
-    return () => media.removeEventListener("change", theme);
-  }, [layer, data.prefs]);
+    document.body.className = [
+      theme === "light" ? "" : "theme-" + theme,
+      layer ? "has-library-layer" : "",
+    ].join(" ");
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        getComputedStyle(document.body)
+          .getPropertyValue("--color-paper")
+          .trim(),
+      );
+  }, [layer, theme]);
   const font = useObjectUrl(data.prefs.customFont);
   useEffect(() => {
     if (!font) return;
