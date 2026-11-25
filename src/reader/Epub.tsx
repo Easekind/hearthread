@@ -36,6 +36,40 @@ export default function Epub(props: EngineProps) {
         "!important} img,svg{max-width:100%}",
     );
   }
+  function applyLayout() {
+    const renderer = view.current?.renderer;
+    if (!renderer) return;
+    const dual = latest.current.prefs.pageLayout === "double";
+    // Setting an unchanged attribute also triggers a full renderer layout.
+    const set = (name: string, value: string) => {
+      if (renderer.getAttribute(name) !== value)
+        renderer.setAttribute(name, value);
+    };
+    if (renderer.localName === "foliate-fxl") {
+      set("spread", dual ? "both" : "none");
+    } else {
+      const width = host.current!.clientWidth;
+      const columns = dual ? 2 : 1;
+      // Vertical publications paginate along the height of the renderer.
+      const inlineSize =
+        renderer.scrollProp === "scrollTop"
+          ? Math.max(1, Math.ceil(renderer.clientHeight / columns))
+          : dual
+            ? Math.min(680, Math.max(1, width - 1))
+            : 680;
+      const margin = dual ? Math.min(48, Math.round(width * 0.035)) : 48;
+      set("max-inline-size", inlineSize + "px");
+      set("max-column-count", String(columns));
+      set("margin-left", margin + "px");
+      set("margin-right", margin + "px");
+    }
+  }
+  useEffect(() => {
+    applyLayout();
+    const observer = new ResizeObserver(applyLayout);
+    observer.observe(host.current!);
+    return () => observer.disconnect();
+  }, [props.prefs.pageLayout]);
   function registerFont(doc: Document) {
     if (!fontBytes.current) return;
     const face = new FontFace("UserReading", fontBytes.current);
@@ -152,42 +186,78 @@ export default function Epub(props: EngineProps) {
           }
         });
       });
+      const toc = flattenToc(book.toc ?? []).filter((item) => item.href);
+      const tocIndex = new Map(toc.map((item, index) => [item, index]));
+      let selected = props.book.sectionIndex ?? -1;
+      let searchHit: ReturnType<EpubView["resolveCFI"]> | undefined;
       node.addEventListener("relocate", (e) => {
         if (!live) return;
-        const p = (e as CustomEvent<Relocation>).detail,
-          index = p.section?.current ?? 0;
+        applyLayout();
+        const p = (e as CustomEvent<Relocation>).detail;
+        const section = p.section?.current ?? 0;
+        let index = section;
+        if (toc.length) {
+          const last = p.tocItem ? (tocIndex.get(p.tocItem) ?? -1) : -1;
+          let first = last;
+          if (p.range) {
+            const start = p.range.cloneRange();
+            start.collapse(true);
+            const item = node.getProgressOf(section, start).tocItem;
+            first = item ? (tocIndex.get(item) ?? last) : -1;
+            if (searchHit?.index === section) {
+              const range = searchHit.anchor(
+                start.startContainer.ownerDocument!,
+              );
+              const hit = range && node.getProgressOf(section, range).tocItem;
+              selected = hit ? (tocIndex.get(hit) ?? -1) : -1;
+              searchHit = undefined;
+            }
+          }
+          // A page or spread may contain several entries. Keep an explicit
+          // destination while it is on screen, then follow the start of the page.
+          if (first === -1 && last >= 0) first = 0;
+          if (selected < first || selected > last) selected = -1;
+          index = selected >= 0 ? selected : first;
+        }
         latest.current.position({
           location: p.cfi,
-          chapter: p.tocItem?.label ?? "",
+          chapter: toc[index]?.label ?? "",
           progress: Math.round((p.fraction || 0) * 100),
           index,
         });
       });
+      if (book.rendition?.layout === "pre-paginated")
+        book.rendition.spread =
+          latest.current.prefs.pageLayout === "double" ? "both" : "none";
       await node.open(book);
       if (!live) {
         node.close();
         return;
       }
-      node.renderer.setAttribute("max-inline-size", "680px");
-      node.renderer.setAttribute("max-column-count", "1");
+      applyLayout();
       style();
       await node.init({
         lastLocation: props.book.location,
         showTextStart: true,
       });
       if (!live) return;
-      const sections = book.sections.map((_, i) => ({
-        target: i,
-        label: t("reader.chapter", { number: i + 1 }),
-      }));
-      const toc = flattenToc(book.toc ?? []).map((t) => ({
-        target: t.href,
-        label: t.label,
-      }));
+      const contents = toc.length
+        ? toc.map((item) => ({ target: item.href, label: item.label }))
+        : book.sections.map((_, i) => ({
+            target: i,
+            label: t("reader.chapter", { number: i + 1 }),
+          }));
       latest.current.ready(
         {
           turn: (d) => void (d < 0 ? node.prev() : node.next()),
-          go: (t) => void node.goTo(t),
+          go: (target) => {
+            selected = toc.findIndex((item) => item.href === target);
+            searchHit =
+              typeof target === "string" && target.startsWith("epubcfi(")
+                ? node.resolveCFI(target)
+                : undefined;
+            void node.goTo(target);
+          },
           async search(query, signal) {
             const hits = [];
             for await (const group of node.search({ query })) {
@@ -205,8 +275,8 @@ export default function Epub(props: EngineProps) {
             return hits.slice(0, 150);
           },
         },
-        toc.length ? toc : sections,
-        sections.length,
+        contents,
+        contents.length,
       );
     }
     start().catch((e) => {

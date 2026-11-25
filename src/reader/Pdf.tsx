@@ -11,14 +11,10 @@ import worker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import type { EngineProps, Destination } from "./engine";
 GlobalWorkerOptions.workerSrc = worker;
 export default function Pdf(props: EngineProps) {
-  const host = useRef<HTMLDivElement>(null),
-    canvas = useRef<HTMLCanvasElement>(null),
-    text = useRef<HTMLDivElement>(null);
   const latest = useRef(props);
   latest.current = props;
   const [doc, setDoc] = useState<PDFDocumentProxy>(),
-    [page, setPage] = useState(Number(props.book.location) || 1),
-    [width, setWidth] = useState(0);
+    [page, setPage] = useState(Number(props.book.location) || 1);
   useEffect(() => {
     let live = true;
     const resource = (folder: string) =>
@@ -42,7 +38,13 @@ export default function Pdf(props: EngineProps) {
         setPage((p) => clamp(p));
         latest.current.ready(
           {
-            turn: (d) => setPage((p) => clamp(p + d)),
+            turn: (direction) =>
+              setPage((current) => {
+                if (latest.current.prefs.pageLayout === "single")
+                  return clamp(current + direction);
+                const next = spreadStart(current) + 2 * direction;
+                return next >= 1 && next <= pdf.numPages ? next : current;
+              }),
             go: (t) => setPage(clamp(Number(t) + 1)),
             async search(q, signal) {
               const hits: Destination[] = [];
@@ -85,6 +87,54 @@ export default function Pdf(props: EngineProps) {
     };
   }, [props.source]);
   useEffect(() => {
+    if (doc)
+      latest.current.position({
+        location: String(page),
+        chapter: "",
+        progress: Math.round((page / doc.numPages) * 100),
+        index: page - 1,
+      });
+  }, [doc, page]);
+  const dual = props.prefs.pageLayout === "double";
+  const first = dual ? spreadStart(page) : page;
+  const pages =
+    doc && dual && first < doc.numPages ? [first, first + 1] : [first];
+  return (
+    <div className="pdf-document">
+      {doc &&
+        pages.map((number) => (
+          <PdfPage
+            key={number}
+            doc={doc}
+            page={number}
+            wide={props.wide}
+            fail={props.fail}
+          />
+        ))}
+    </div>
+  );
+}
+
+function spreadStart(page: number) {
+  return page - ((page - 1) % 2);
+}
+
+function PdfPage({
+  doc,
+  page,
+  wide,
+  fail,
+}: {
+  doc: PDFDocumentProxy;
+  page: number;
+  wide: boolean;
+  fail: EngineProps["fail"];
+}) {
+  const host = useRef<HTMLDivElement>(null),
+    canvas = useRef<HTMLCanvasElement>(null),
+    text = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
     const ro = new ResizeObserver(([entry]) =>
       setWidth(entry.contentRect.width),
     );
@@ -92,15 +142,15 @@ export default function Pdf(props: EngineProps) {
     return () => ro.disconnect();
   }, []);
   useEffect(() => {
-    if (!doc || !width) return;
+    if (!width) return;
     let live = true,
       render: RenderTask | undefined,
       layer: TextLayer | undefined;
     async function draw() {
-      const p = await doc!.getPage(page);
+      const p = await doc.getPage(page);
       if (!live) return;
       const base = p.getViewport({ scale: 1 }),
-        scale = props.wide
+        scale = wide
           ? width / base.width
           : Math.min(
               width / base.width,
@@ -131,25 +181,18 @@ export default function Pdf(props: EngineProps) {
         viewport,
       });
       await Promise.all([render.promise, layer.render()]);
-      if (live)
-        latest.current.position({
-          location: String(page),
-          chapter: "",
-          progress: Math.round((page / doc!.numPages) * 100),
-          index: page - 1,
-        });
     }
     draw().catch((e) => {
-      if (live) latest.current.fail(e);
+      if (live) fail(e);
     });
     return () => {
       live = false;
       render?.cancel();
       layer?.cancel();
     };
-  }, [doc, width, page, props.wide]);
+  }, [doc, width, page, wide]);
   return (
-    <div ref={host} className="pdf-document">
+    <div ref={host} className="pdf-page-slot">
       <div className="pdf-sheet">
         <canvas ref={canvas} aria-label={t("reader.page", { number: page })} />
         <div className="textLayer" ref={text} />

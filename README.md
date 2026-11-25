@@ -11,9 +11,9 @@ Hearthread is a local-first, cross-platform personal library. It starts with imm
 ## Features
 
 - **One personal library.** Organize EPUB books, PDFs and Markdown documents by category and search them from one shelf. Image management is planned.
-- **Immersive reading.** Tap the page to hide the controls, choose a font and line spacing that feel comfortable, and return to the passage where you left off.
+- **Immersive reading.** Tap the page to hide the controls, adjust the font and line spacing, and return to the passage where you left off. Reading starts in single-page mode. On wider tablet and desktop windows, you can switch to a two-page spread.
 - **Desktop and mobile.** hearthread targets macOS, Windows, iOS and Android. A library backup lets you carry your books and reading positions to another device.
-- **Efficient rendering.** EPUB chapters load on demand. The PDF reader draws only the current page and cancels unfinished rendering when you turn the page.
+- **Efficient rendering.** EPUB chapters load on demand. The PDF reader draws the visible pages and cancels unfinished rendering when you turn the page.
 
 ## Local development
 

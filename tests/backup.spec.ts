@@ -15,6 +15,13 @@ test("export library and restore into a fresh local store", async ({
   await expect(
     page.getByRole("button", { name: "选择 备份样本", exact: true }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "选择 备份样本", exact: true })
+    .dblclick();
+  await page.locator(".markdown-content h1").click();
+  await page.getByRole("button", { name: "阅读排版", exact: true }).click();
+  await page.getByRole("button", { name: "双屏", exact: true }).click();
+  await page.getByRole("button", { name: "返回书库" }).click();
   await page.getByRole("button", { name: "设置", exact: true }).click();
   await page.getByRole("button", { name: "跟随系统" }).click();
   await page.getByRole("button", { name: "阅读排版", exact: true }).click();
@@ -69,6 +76,10 @@ test("export library and restore into a fresh local store", async ({
       .getByRole("button", { name: "选择 备份样本", exact: true })
       .dblclick();
     await expect(fresh.locator(".markdown-content h1")).toHaveText("已恢复");
+    await expect(fresh.locator(".text-document")).toHaveAttribute(
+      "data-layout",
+      "double",
+    );
     const paragraph = fresh.locator(".markdown-content p");
     await expect(paragraph).toHaveCSS("font-size", "12px");
     await expect(paragraph).toHaveCSS("line-height", "12px");

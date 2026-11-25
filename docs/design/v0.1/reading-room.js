@@ -1,4 +1,6 @@
 const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜',system:'跟随系统'};
+const spreadViewport = matchMedia('(min-width: 720px) and (min-height: 500px)');
+let preferredLayout = 'single';
 let sampleFontImported = false;
 let fontCategory = 'serif', readingFont = 'default', pdfWide = false;
 const chapterMemory = new Map();
@@ -62,31 +64,34 @@ document.addEventListener('input',event=>{
 function reader() {
   const book=books.find(b=>b.id===activeBook);
   const epub=route==='reader', pdf=route==='pdf';
+  const pageLayout=spreadViewport.matches?preferredLayout:'single';
 
   const paperStyle=`--reader-size:${fontSize}px;--reader-leading:${leading};--reading-face:${readerFonts()}`;
   const content=readerSpecimen(book,pdf,!epub&&!pdf);
   const tool=(action,symbol,label)=>`<button type="button" class="room-tool" data-action="${action}" aria-label="${label}" title="${label}" ${['toc','reader-search','typography'].includes(action)?`aria-expanded="${readerPanel===({toc:'toc','reader-search':'search',typography:'type'}[action])}"`:''}>${symbol==='type'?'<span class="type-symbol">Aa</span>':icon(symbol)}</button>`;
-  const navigation=epub?`<button class="room-tool" data-action="prev" aria-label="上一章" ${chapter===1?'disabled':''}>${icon('previous')}</button>
+  const navigation=epub?`<button class="room-tool" data-action="prev" aria-label="${pageLayout==='double'?'上一页':'上一章'}" ${pageLayout==='single'&&chapter===1?'disabled':''}>${icon('previous')}</button>
     <label class="chapter-position"><span>第 ${chapter} 章 <i>/ ${chapterNames.length}</i></span>${readingRange('chapter-progress','选择章节',1,chapterNames.length,1,chapter)}</label>
-    <button class="room-tool" data-action="next" aria-label="下一章" ${chapter===chapterNames.length?'disabled':''}>${icon('next')}</button>`
+    <button class="room-tool" data-action="next" aria-label="${pageLayout==='double'?'下一页':'下一章'}" ${pageLayout==='single'&&chapter===chapterNames.length?'disabled':''}>${icon('next')}</button>`
     :pdf?`<button class="pdf-fit" data-action="pdf-scale" aria-label="切换 PDF 显示宽度" aria-pressed="${pdfWide}">第 3 页 · ${pdfWide?'适合宽度':'适合页面'} ${icon(pdfWide?'fitWidth':'fitPage')}</button>`
     :`${tool('prev','previous','向上翻页')}<span class="document-position">Markdown</span>${tool('next','next','向下翻页')}`;
-  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${resolvedPaper()}" data-pdf-wide="${pdfWide}" style="${paperStyle}">
+  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${resolvedPaper()}" data-pdf-wide="${pdfWide}" data-page-layout="${pageLayout}" style="${paperStyle}">
     <button class="reading-tools-access" data-action="show-reading-tools" ${focusMode?'':'hidden'}>显示阅读工具</button>
     <header class="room-head" ${focusMode?'inert':''}><button class="room-back" aria-label="返回书库" data-route="library">${icon('back')}<span>书库</span></button>
     <div class="room-identity"><strong>${esc(book.title)}</strong><small>${esc(book.author.replace(' / 示例文档',''))}</small></div>
     <div class="room-actions">${tool('reader-search','search','书内搜索')}</div></header>
-    ${content}
+    <div class="text-document" data-layout="${pageLayout}">${content}</div>
     <footer class="room-dock" aria-label="阅读工具" ${focusMode?'inert':''}>${tool('toc','contents','目录')}<div class="room-navigation">${navigation}</div>
-    ${pdf?tool('typography','sun','阅读纸色'):tool('typography','type','阅读排版')}</footer>
+    ${pdf?tool('typography','sun','阅读显示'):tool('typography','type','阅读排版')}</footer>
     ${readerPanel?readingPanel():''}</main>`;
 }
 let passageQuery='';
 const documentPassages='.pdf-page p,.markdown-content p,.markdown-content li,.markdown-content blockquote';
 function readingPanel() {
-  const heading={toc:'目录',search:'书内搜索',type:route==='pdf'?'阅读纸色':'阅读排版'}[readerPanel];
+  const heading={toc:'目录',search:'书内搜索',type:route==='pdf'?'阅读显示':'阅读排版'}[readerPanel];
   let body;
-  if (readerPanel==='type') body=`${route==='pdf'?'':fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
+  const layoutChoices=['single','double'].map((value,i)=>`<button type="button" data-action="layout-${value}" aria-pressed="${preferredLayout===value}">${['单屏','双屏'][i]}</button>`).join('');
+  const layoutRow=spreadViewport.matches?`<div class="face-row layout-row" role="group" aria-label="页面布局"><span>页面布局</span><div class="layout-choices">${layoutChoices}</div></div>`:'';
+  if (readerPanel==='type') body=`${layoutRow}${route==='pdf'?'':fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
     ${route==='pdf'?'':'<button class="reset-reading" data-action="reset-type">恢复默认排版</button>'}`;
   if (readerPanel==='toc') {
     const headings=route==='reader'?chapterNames:specimenSections().map(h=>h.textContent);

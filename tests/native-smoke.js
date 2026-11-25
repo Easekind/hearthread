@@ -124,8 +124,19 @@
         () => query(".markdown-content")?.innerText.includes("原生验证"),
         "reopen Markdown",
       );
-      await until(() => query(".reading-layer").scrollTop > 0, "resume scroll");
-      log.push("reopened original Markdown from scoped native asset URL");
+      await until(
+        () => query(".text-document[data-layout=double]")?.scrollLeft > 0,
+        "resume two-page Markdown",
+      );
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+      await click('.room-dock button[aria-label="目录"]');
+      await until(
+        () =>
+          query(".contents-list [aria-current=location] span")?.textContent ===
+          "随笔 30",
+        "restore selected Markdown heading",
+      );
+      log.push("reopened original Markdown with its selected heading");
       await ipc("plugin:event|emit", {
         event: "smoke-result",
         payload: { ok: true, log },
@@ -135,7 +146,13 @@
     const inputFiles = new DataTransfer();
     inputFiles.items.add(
       new File(
-        ["# 原生验证\n\n" + "阅读进度必须保留。\n\n".repeat(180)],
+        [
+          "# 原生验证\n\n" +
+            Array.from(
+              { length: 60 },
+              (_, i) => "## 随笔 " + i + "\n\n阅读进度必须保留。",
+            ).join("\n\n"),
+        ],
         "native-check.md",
         { type: "text/markdown" },
       ),
@@ -168,7 +185,7 @@
           () => query(".chapter-position span")?.textContent.includes("/ 4"),
           "EPUB relocate",
         );
-      if (book.type === "PDF")
+      if (book.type === "PDF") {
         await until(
           () =>
             query(".textLayer")?.textContent.includes("Architecture") &&
@@ -178,9 +195,51 @@
               .data.some((value, i) => i % 4 === 0 && value < 100 && value > 0),
           "PDF text and raster render",
         );
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+        await click('.room-dock button[aria-label="阅读显示"]');
+        button("双屏").click();
+        await until(
+          () =>
+            document.querySelectorAll(".textLayer")[1]?.textContent.length > 0,
+          "second PDF text layer",
+        );
+        const sheets = [...document.querySelectorAll(".pdf-sheet canvas")].map(
+          (canvas) => canvas.getBoundingClientRect(),
+        );
+        if (sheets[1].left <= sheets[0].right) throw Error("PDF pages overlap");
+        button("单屏").click();
+        await click('button[aria-label="关闭阅读显示"]');
+      }
       if (book.type === "MD") {
         await until(() => query(".markdown-content h1"), "Markdown render");
-        query(".reading-layer").scrollTop = 500;
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+        await click('.room-dock button[aria-label="阅读排版"]');
+        (await until(() => button("双屏"), "two-page option")).click();
+        await until(
+          () => query(".text-document[data-layout=double]"),
+          "two-page layout",
+        );
+        await click('button[aria-label="关闭阅读排版"]');
+        await click('button[aria-label="向下翻页"]');
+        await until(
+          () => query(".text-document").scrollLeft > 0,
+          "next Markdown spread",
+        );
+        await click('.room-dock button[aria-label="目录"]');
+        await click(".contents-list button:nth-child(31)");
+        const heading = query(
+          ".markdown-content h2:nth-of-type(31)",
+        ).getBoundingClientRect();
+        if (heading.left < 0 || heading.left >= innerWidth)
+          throw Error("Markdown destination is off screen");
+        await click('.room-dock button[aria-label="目录"]');
+        await until(
+          () =>
+            query(".contents-list [aria-current=location] span")
+              ?.textContent === "随笔 30",
+          "selected Markdown heading",
+        );
+        await click('button[aria-label="关闭目录"]');
       }
       await sleep(400);
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

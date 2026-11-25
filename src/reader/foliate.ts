@@ -9,6 +9,7 @@ interface Section {
   linear?: string;
 }
 interface Epub {
+  rendition?: { layout?: string; spread?: string };
   metadata: {
     title?: string;
     author?: string | Array<string | { name: string }>;
@@ -22,6 +23,7 @@ interface Epub {
 export interface Relocation {
   fraction: number;
   cfi: string;
+  range?: Range;
   section?: { current: number; total: number };
   tocItem?: Toc;
 }
@@ -30,9 +32,15 @@ export interface EpubView extends HTMLElement {
   init(o: { lastLocation?: string; showTextStart: boolean }): Promise<void>;
   close(): void;
   goTo(t: string | number): Promise<void>;
+  resolveCFI(cfi: string): {
+    index: number;
+    anchor(doc: Document): Range | null;
+  };
+  getProgressOf(index: number, range: Range): { tocItem?: Toc };
   prev(): Promise<void>;
   next(): Promise<void>;
-  renderer: {
+  renderer: HTMLElement & {
+    readonly scrollProp?: "scrollLeft" | "scrollTop";
     setStyles?(css: string): void;
     setAttribute(key: string, value: string): void;
   };
