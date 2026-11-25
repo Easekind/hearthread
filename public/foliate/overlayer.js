@@ -15,7 +15,7 @@ const pageOf = (root, { left, top, right, bottom }) => {
 
 // An OCR text layer (scanned PDFs) boxes every word on its own, each a little
 // off its neighbours, so a highlight drew a box per word, with gaps and
-// stepped edges between them (readest/readest#6578). Fold consecutive rects
+// stepped edges between them (#6578). Fold consecutive rects
 // of a line into one strip: a rect joins the line when it overlaps it across
 // the line and sits close along it. A comma or a note number joins however
 // small it is; a rect over twice the line's size, like a tall inline image,
@@ -387,7 +387,7 @@ export class Overlayer {
             // The caps pad past the rects, and with the page margins and gap
             // at zero the pages touch: the 2px after a column-wide image
             // painted a stripe the height of the image down the edge of the
-            // next page (readest/readest#6128). Never paint past the rect's
+            // next page (#6128). Never paint past the rect's
             // own page.
             if (page) {
                 const right = Math.min(x + w, page.right)

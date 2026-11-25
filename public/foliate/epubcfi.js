@@ -310,7 +310,7 @@ const nodeToParts = (node, offset, filter) => {
 // element's children, (element, i), is written as the element and read back
 // as its start. As a range's end that drops everything before it: a selection
 // dragged past the last line of a PDF text layer ends after the layer's last
-// child and came back collapsed (readest/readest#6578). Move such an end into
+// child and came back collapsed (#6578). Move such an end into
 // the child before it.
 const endInsideChild = (node, offset) => {
     while (isElementNode(node) && offset > 0) {
@@ -325,7 +325,7 @@ const endInsideChild = (node, offset) => {
 // The same for a range's start, which read back as the element's start pulls
 // in everything before it: WebKit reports a selection that starts right after
 // an inline element as (parent, i), and its highlight was drawn from the start
-// of the paragraph (readest/readest#7482). Move such a start to the start of
+// of the paragraph (#7482). Move such a start to the start of
 // the child after it, or into the child before it when there is none. A start
 // at (element, 0) already reads back as itself. A cfi-skip wrapper has no step
 // of its own, so a start on one moves to the start of its first child.

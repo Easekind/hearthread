@@ -129,8 +129,8 @@ export const findScrollPageRange = ({ starts, sizes }, lo, hi) => {
 // the reader. Prioritising the nearest page and bounding concurrency keeps a
 // fast fling from kicking off a full-resolution canvas render for every page it
 // flies past — that thrashes the main thread and spikes WebView memory
-// (readest#4795), the same pressure the PDF range-read throttle guards against
-// (readest#3470).
+// (#4795), the same pressure the PDF range-read throttle guards against
+// (#3470).
 export const planScrollModePages = ({
     pages, currentIndex, maxLoaded, maxConcurrent, loadingCount,
 }) => {
@@ -189,11 +189,11 @@ export const computePaginatedScroll = ({
 })
 
 // Translate a vertical wheel tick into a horizontal scroll delta for
-// horizontal scroll mode (pdf.js behavior, readest#4995). Returns null when
+// horizontal scroll mode (pdf.js behavior, #4995). Returns null when
 // the tick belongs to native scrolling instead: vertical mode, pinch zoom
 // (ctrl+wheel), horizontal-dominant trackpad pans, or a strip with vertical
 // overflow to consume (a zoomed page pans vertically first). Translating is
-// safe with respect to the readest#4727 double-scroll: with no vertical
+// safe with respect to the #4727 double-scroll: with no vertical
 // overflow the browser cannot natively consume a vertical delta, so the
 // translated scroll cannot stack on a native one.
 export const computeScrollWheelDelta = ({
@@ -224,7 +224,7 @@ export const computeSpreadSpineOverlap = ({
 }
 
 // Overlap (CSS px) between neighbouring scroll-mode pages, the scroll-flow
-// counterpart of `computeSpreadSpineOverlap` (readest#6484). With a zero gap
+// counterpart of `computeSpreadSpineOverlap` (#6484). With a zero gap
 // (Webtoon Mode) each zoomed page is a scaled compositor layer whose edge lands
 // on a fractional device pixel and is anti-aliased against transparency, so the
 // scroll background shows through as a thin line between the images. Pulling
@@ -236,8 +236,8 @@ export const computeScrollPageOverlap = ({ gap = 4, devicePixelRatio = 1 } = {})
     gap === 0 ? 2 / (devicePixelRatio || 1) : 0
 
 // Page columns the reader cell is showing, for the captured page curl
-// (readest#6239). Two means the curl turns just the outer page as a leaf hinged
-// at the spine (readest#6106): the shader reflects that leaf about the cell's
+// (#6239). Two means the curl turns just the outer page as a leaf hinged
+// at the spine (#6106): the shader reflects that leaf about the cell's
 // horizontal centre, which is where the spine actually is, because
 // `computeSpreadInlineMargins` pushes both pages together and centres the pair.
 // Every other shape — a centred page, the lone page portrait shows, a
@@ -256,7 +256,7 @@ export const computeSpreadColumnCount = ({
 // (`margin-inline-end: auto`), so the pair sits centred. In portrait only one
 // page of the spread is shown; a one-sided auto margin would strand that lone
 // page in one half of the viewport whenever it is narrower than the viewport
-// (readest#4984), so both margins are auto to centre it. Both inline margins are
+// (#4984), so both margins are auto to centre it. Both inline margins are
 // always set explicitly (the opposite side cleared to '') so a re-render after
 // an orientation change fully overwrites the previous layout's margins — frames
 // are re-styled in place, not recreated, on rotation.
@@ -529,7 +529,7 @@ export class FixedLayout extends HTMLElement {
         }
         /* Placed along the strip by #placeScrollPage and centered across it.
            In Webtoon Mode each page overlaps the previous one to hide the
-           anti-aliased seam (readest#6484); later pages come later in the DOM,
+           anti-aliased seam (#6484); later pages come later in the DOM,
            so they paint on top. The pages are not clipped (no overflow:
            hidden) because the clip of a box on a fractional device pixel is
            itself anti-aliased and reopens the seam. */
@@ -1375,7 +1375,7 @@ export class FixedLayout extends HTMLElement {
                 }))
                 // During the brief idle window after scrolling settles the
                 // iframe is interactive (pointer-events: auto), so the first
-                // wheel tick of a new gesture lands on it (readest#4727).
+                // wheel tick of a new gesture lands on it (#4727).
                 // Vertical mode: the browser already chains that tick to the
                 // host scroller natively (a single smooth scroll, matching the
                 // page margins) — so JS must NOT scroll the host itself, or the
@@ -1654,7 +1654,7 @@ export class FixedLayout extends HTMLElement {
         this.#spreads = spreads
         if (shown >= 0) this.#index = shown
         // Any other spread on screen has to outlive the turn that leaves it
-        // (readest#6239). So nothing is removed here: the frames move out of
+        // (#6239). So nothing is removed here: the frames move out of
         // reach of the new indices, and the trim evicts them by age.
         const moved = []
         for (const key of [...this.#prerenderedSpreads.keys()]) {
@@ -2014,7 +2014,7 @@ export class FixedLayout extends HTMLElement {
         // The spread being left is the one the reader may still be touching: a
         // captured page turn navigates under its overlay with the finger down on
         // the outgoing frame, and detaching that iframe ends the touch sequence
-        // with no touchend, freezing the turn (readest#6239). Its stamp dates
+        // with no touchend, freezing the turn (#6239). Its stamp dates
         // from when it was shown — older than every preload made since, so the
         // trim in #preloadNextSpreads evicted it on each backward turn. Bump it
         // now; the trim then drops a stale preload instead.
@@ -2326,7 +2326,7 @@ export class FixedLayout extends HTMLElement {
         // Scale the shown pages as one spread around its centre, which is how
         // the committed zoom lays them out. Scaling each page around its own
         // centre pulled the two pages of a spread apart, and the release
-        // jumped sideways (readest#6941). Offsets ignore the transform, so the
+        // jumped sideways (#6941). Offsets ignore the transform, so the
         // origin holds still across moves.
         const left = Math.min(...elements.map(el => el.offsetLeft))
         const top = Math.min(...elements.map(el => el.offsetTop))
@@ -2405,7 +2405,7 @@ export class FixedLayout extends HTMLElement {
     }
     set containerPosition(newVal) {
         // Mirror the paginator's read/write containerPosition contract (see
-        // READEST-11). No-op when paginated.
+        // upstream report 11). No-op when paginated.
         if (!this.#scrollMode) return
         if (this.#scrollHorizontal) this.scrollLeft = this.rtl ? -newVal : newVal
         else this.scrollTop = newVal

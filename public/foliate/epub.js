@@ -26,7 +26,7 @@ const MIME = {
 // a document declared XHTML that the XML parser could not parse
 const isBrokenXHTML = doc => doc.querySelector('parsererror')
     || !doc.documentElement?.namespaceURI
-// Void elements that Adobe InDesign / Digital Editions exports leave unclosed
+// Void elements that some EPUB exports leave unclosed
 // (`<meta charset="utf-8">` constantly), the usual reason such a file is not
 // well-formed XML. Lowercase only: XHTML is case-sensitive, and an uppercase
 // `<BR>` closed as `<BR/>` would parse as an unknown element instead of a
@@ -239,13 +239,13 @@ const getPropertyURL = (value, prefixes) => {
     return baseURL ? baseURL + reference : null
 }
 
-// See the call site in getMetadata() for the two calibre encodings this reads.
+// See the call site in getMetadata() for the two OPF encodings this reads.
 const getCalibreUserMetadata = (metaEls, legacyMeta) => {
-    // calibre's to_json wraps non-JSON types; only datetime appears in columns
+    // The serializer wraps non-JSON types; only datetime appears in columns
     const fromJSON = x => x?.__class__ === 'datetime.datetime' ? x.__value__ : x
     const isEmpty = (value, datatype) => value == null || value === ''
         || Array.isArray(value) && !value.length
-        // calibre can't distinguish these from unset, and neither can we
+        // These sentinel values represent unset fields
         || datatype === 'datetime' && String(value).startsWith('0101-01-01')
         || datatype === 'rating' && !value
     const columns = []
@@ -415,11 +415,11 @@ const getMetadata = opf => {
     tidy(metadata)
     if (metadata.altIdentifier === metadata.identifier)
         delete metadata.altIdentifier
-    // Calibre embeds its custom columns ("user metadata") when polishing or
-    // sending books. Two encodings (see calibre's opf2.py/opf3.py):
+    // Some EPUBs contain custom columns ("user metadata") embedded when exporting
+    // books. The parser supports two encodings:
     //   OPF 2: <meta name="calibre:user_metadata:#label" content="{json}"/> per column
     //   OPF 3: a single <meta property="calibre:user_metadata"> whose text is
-    //          a JSON dict of all columns keyed by "#label"; calibre prefers
+    //          a JSON dict of all columns keyed by "#label"; prefer
     //          this form over the legacy metas when both are present
     // The column value lives in `#value#` (series index in `#extra#`);
     // datetimes are wrapped as {"__class__": "datetime.datetime",
@@ -1152,10 +1152,10 @@ class Loader {
                     child = child.nextSibling
                 }
             }
-            // Duokan packs a taller `~slim` variant beside an image
+            // Some books pack a taller `~slim` variant beside an image
             // (`cover~slim.jpg` next to `cover.jpg`) for tall phone screens;
             // expose it so the paginator can swap it in for a full-page cover
-            // (readest/readest#6513)
+            // (#6513)
             await mapBounded([...doc.querySelectorAll('img[src]')], async el => {
                 const slim = el.getAttribute('src').replace(/(\.\w+)$/, '~slim$1')
                 const url = await this.loadHref(slim, href, parents)
