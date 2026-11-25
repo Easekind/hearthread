@@ -28,6 +28,7 @@ export interface Preferences {
   locale: Locale;
   theme: Theme;
   paper: Theme;
+  pageLayout: "single" | "double";
   size: number;
   leading: number;
   fontCategory: "serif" | "sans";
@@ -45,6 +46,7 @@ export const defaults: Preferences = {
   locale: "en",
   theme: "light",
   paper: "light",
+  pageLayout: "single",
   size: 20,
   leading: 1.95,
   fontCategory: "serif",

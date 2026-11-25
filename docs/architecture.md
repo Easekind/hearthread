@@ -6,12 +6,22 @@
 | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Tauri 2](https://github.com/tauri-apps/tauri) 与 [Vite 配置](https://v2.tauri.app/start/frontend/vite/)             | 各平台复用 React 页面，IPC 处理原生文件操作                                | 独立的 Rust 库入口、移动端入口、按窗口配置的能力与只读资源范围                                                                                                                       |
 | [本地优化版 foliate-js 的提交号](../public/foliate/REVISION)                                                         | 复用分章加载、排版分页、长章节切分、固定版式及搜索接口                     | `public/foliate` 固定该提交的 EPUB 运行时子集。应用只走 EPUB 路径。固定版式使用现代 WebView 自带的可构造样式表                                                                       |
-| [Mozilla PDF.js 示例](https://mozilla.github.io/pdf.js/examples/)                                                    | 独立解析 Worker、按页取 viewport、控制 canvas 尺寸；资源地址按应用来源解析 | 只挂载当前页，高 DPI 绘制有像素预算。并行生成可选文字层，换页取消旧任务，关闭时销毁 loading task                                                                                     |
+| [Mozilla PDF.js 示例](https://mozilla.github.io/pdf.js/examples/)                                                    | 独立解析 Worker、按页取 viewport、控制 canvas 尺寸；资源地址按应用来源解析 | 挂载可见的一页或两页，高 DPI 绘制有像素预算。并行生成可选文字层，换页取消旧任务，关闭时销毁 loading task                                                                             |
 | [react-markdown](https://github.com/remarkjs/react-markdown) 与 [remark-gfm](https://github.com/remarkjs/remark-gfm) | 语法树生成 React 元素，GFM 扩展表格等语法                                  | 读取独立文档，跳过原始 HTML；锚点在阅读层定位，用户点击外链后交由平台打开                                                                                                            |
 | [shadcn/ui](https://ui.shadcn.com/docs/components/radix/dialog)                                                      | 在仓库内维护组件源码，复用 Radix 的焦点管理与键盘交互                      | Button 和 Slider 在 `src/ui/` 中维护。外观通过同一组按钮选择固定主题或跟随系统，排版与 EPUB 章节滑动条使用 Radix Slider。书库使用原稿图标，存储详情使用 Lucide 与按需加载的 Recharts |
 | [rusqlite](https://github.com/rusqlite/rusqlite)                                                                     | 在 Rust 层使用随应用打包的 SQLite                                          | 参数化 SQL、WAL、FULL 同步、每批变更使用一个事务                                                                                                                                     |
 
 Bun 和 Cargo 分别通过 `bun.lock` 和 `Cargo.lock` 锁定依赖版本。Bun 版本在 `package.json` 的 `packageManager` 中指定，CI 按此版本执行冻结安装。项目级 `.npmrc` 指定公共注册表，保证本地和 CI 使用同一依赖来源。React 19、TypeScript 7、Tailwind CSS 4、Vite 8、PDF.js 6 和 Tauri 2 组成首版技术栈。生产资源随安装包分发，阅读引擎、CMap、字体和解码器均可离线加载。
+
+## 阅读页面布局
+
+页面布局使用全书库的本地偏好，初始为单屏。阅读视口宽度至少 720 CSS 像素且高度至少 500 CSS 像素时提供双屏。手机横竖屏和较窄的平板分屏窗口使用单屏，恢复宽屏后重新应用已保存的布局。EPUB 在同一个阅读视图中重排并以 CFI 续读。流式正文通过列数和栏宽控制分页，固定版式在打开前设置跨页方式，阅读中切换时由引擎按书脊顺序重新配对。[foliate-js 分页实现](https://github.com/readest/foliate-js/blob/fd05acdeb0a1dc16752d252bbb4bf6971e175450/paginator.js) · [固定版式实现](https://github.com/readest/foliate-js/blob/fd05acdeb0a1dc16752d252bbb4bf6971e175450/fixed-layout.js)
+
+EPUB 目录与章节滑块共用书内导航条目和目标地址，包括指向同一文件内不同小节的锚点。没有目录的书按书脊顺序导航。EPUB 与 Markdown 的阅读记录同时保存正文位置和目录序号，供同一屏含有多个标题时恢复选中项。
+
+PDF 使用 PDF.js 6.5.438，双屏从第 1、2 页开始配对。每页的画布、文字层和取消任务独立，目录、搜索和存储使用原始页码，末尾落单页保留原来的页宽。[PDF.js 页面分组](https://github.com/mozilla/pdf.js/blob/master/web/pdf_viewer.js)
+
+Markdown 和内置文字样章复用原有正文节点，双屏以 CSS 多栏按视口高度分栏。切换布局时定位当前可见段落，左右翻页按整组两栏移动，Markdown 续读保存阅读轴上的相对位置。
 
 ## 界面语言
 

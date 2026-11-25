@@ -7,14 +7,11 @@ import pixelmatch from "pixelmatch";
 for (const [width, height] of [
   [1440, 900],
   [390, 844],
+  [744, 1133],
 ])
-  for (const surface of [
-    "library",
-    "settings",
-    "language",
-    "typography",
-    "read-1",
-  ]) {
+  for (const surface of width === 744
+    ? ["spread"]
+    : ["library", "settings", "language", "typography", "read-1", "spread"]) {
     test(surface + " pixels " + width, async ({ page }, info) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -33,7 +30,33 @@ for (const [width, height] of [
             : surface === "language"
               ? "语言"
               : "";
-        await page.goto(url + "#" + (section ? "settings" : surface));
+        await page.goto(
+          url +
+            "#" +
+            (section ? "settings" : surface === "spread" ? "read-1" : surface),
+        );
+        if (surface === "spread") {
+          await page.locator(".reading-content h1").click();
+          await page
+            .getByRole("button", { name: "阅读排版", exact: true })
+            .click();
+          if (width === 390) {
+            await expect(
+              page.getByRole("group", { name: "页面布局" }),
+            ).toHaveCount(0);
+          } else {
+            await page
+              .getByRole("button", { name: "双屏", exact: true })
+              .click();
+          }
+          await page.getByRole("button", { name: "关闭阅读排版" }).click();
+          await page.locator(".reading-content h1").click();
+          await expect(page.locator(".reading-content")).toHaveCSS(
+            "column-count",
+            width === 390 ? "auto" : "2",
+          );
+          await page.mouse.move(0, 0);
+        }
         if (section) {
           if (width === 390) {
             await page.getByRole("button", { name: /设置分类/ }).click();

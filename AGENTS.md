@@ -30,7 +30,7 @@
 - 视觉对照以 `docs/design/v0.1/index.html` 的交互稿为准。书墙在 `src/library/`，通用控件和设置在 `src/ui/`。从设计稿提取的 `public/design/edition.css` 作为静态文件加载。设计源稿变动后，用 `node scripts/design-assets.mjs` 重新提取资源。
 - 修改阅读器先看 `src/reader/Reader.tsx` 和同目录的 `engine.ts`。内置样章有独立的渲染路径。调整分页、搜索或续读时，导入对应格式的文件验证。
 - 阅读器功能难以实现、渲染卡顿或出现性能瓶颈时，优先查阅工作区内成熟阅读器对应功能的架构和实现。EPUB 使用同级目录的优化版 `../foliate-js`；升级内置引擎时，运行 `node scripts/vendor-epub.mjs ../foliate-js`，检查生成的改动和 `public/foliate/REVISION` 中的提交号，清理上游注释中的竞品举例和具名工单引用。
-- `src/reader/Pdf.tsx` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。只渲染当前页，换页时取消旧任务。Markdown 使用 `react-markdown`，禁用原始 HTML。
+- `src/reader/Pdf.tsx` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。单屏渲染当前页，双屏渲染当前跨页，换页时取消旧任务。Markdown 使用 `react-markdown`，禁用原始 HTML。
 
 ## 存储和阅读位置
 

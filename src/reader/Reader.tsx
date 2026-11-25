@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { defaults, themeOptions, type Book, type Preferences } from "../model";
 import { EngineBoundary } from "./EngineBoundary";
@@ -19,6 +20,12 @@ import type { Destination, Position, ReaderEngine } from "./engine";
 const Epub = lazy(() => import("./Epub")),
   Pdf = lazy(() => import("./Pdf")),
   TextDocument = lazy(() => import("./TextDocument"));
+const spreadViewport = matchMedia("(min-width: 720px) and (min-height: 500px)");
+function subscribeToViewport(notify: () => void) {
+  spreadViewport.addEventListener("change", notify);
+  return () => spreadViewport.removeEventListener("change", notify);
+}
+
 export default function Reader({
   book,
   prefs,
@@ -58,7 +65,7 @@ export default function Reader({
         progress: Math.max(0, Math.min(100, p.progress)),
         chapter: p.chapter,
         sectionIndex:
-          initial.type === "EPUB" && !p.chapter ? p.index : undefined,
+          initial.type !== "PDF" && p.index >= 0 ? p.index : undefined,
       });
     return lastSave.current;
   }
@@ -86,6 +93,12 @@ export default function Reader({
     show(true);
     setPanel((v) => (v === name ? "" : name));
   }
+  useLayoutEffect(() => {
+    if (panel === "toc")
+      layer.current
+        ?.querySelector(".panel-toc [aria-current=location]")
+        ?.scrollIntoView({ block: "nearest" });
+  }, [panel, index, toc]);
   useLayoutEffect(() => {
     layer.current?.focus({ preventScroll: true });
     if (
@@ -195,7 +208,15 @@ export default function Reader({
     : TextDocument;
   const Engine = component;
   const paper = useResolvedTheme(prefs.paper);
-  const enginePrefs = useMemo(() => ({ ...prefs, paper }), [prefs, paper]);
+  const canShowSpread = useSyncExternalStore(
+    subscribeToViewport,
+    () => spreadViewport.matches,
+  );
+  const pageLayout = canShowSpread ? prefs.pageLayout : "single";
+  const enginePrefs = useMemo(
+    () => ({ ...prefs, paper, pageLayout }),
+    [prefs, paper, pageLayout],
+  );
   const props = {
     book: initial,
     prefs: enginePrefs,
@@ -221,9 +242,14 @@ export default function Reader({
       ? t("reader.contents")
       : panel === "type"
         ? pdf
-          ? t("reader.paper")
+          ? t("reader.display")
           : t("settings.typography")
         : t("reader.find");
+  const firstPage = index - (index % 2) + 1;
+  const pdfLabel =
+    book.object && pageLayout === "double" && firstPage < count
+      ? t("reader.pages", { first: firstPage, last: firstPage + 1 })
+      : t("reader.page", { number: book.object ? index + 1 : 3 });
   function go(t: string | number) {
     engine.current?.go(t);
     setPanel("");
@@ -242,6 +268,7 @@ export default function Reader({
         className={"reader reading-room " + (tools || error ? "" : "is-focus")}
         data-paper={paper}
         data-pdf-wide={wide}
+        data-page-layout={pageLayout}
         style={typeStyle(prefs)}
       >
         {!tools && (
@@ -333,15 +360,21 @@ export default function Reader({
             {epub ? (
               <div className="chapter-position">
                 <span>
-                  {t("reader.chapter", { number: index + 1 })} <i>/ {count}</i>
+                  {index >= 0
+                    ? t("reader.chapter", { number: index + 1 })
+                    : "—"}{" "}
+                  <i>/ {count}</i>
                 </span>
                 {count > 1 && (
                   <Slider
                     aria-label={t("reader.selectChapter")}
                     value={[index + 1]}
-                    min={1}
+                    min={index < 0 ? 0 : 1}
                     max={count}
-                    onValueChange={([chapter]) => go(chapter - 1)}
+                    onValueChange={([chapter]) => {
+                      const item = toc[chapter - 1];
+                      if (item) go(item.target);
+                    }}
                   />
                 )}
               </div>
@@ -352,8 +385,7 @@ export default function Reader({
                 aria-pressed={wide}
                 onClick={() => setWide((v) => !v)}
               >
-                {t("reader.page", { number: book.object ? index + 1 : 3 })} ·{" "}
-                {wide ? t("reader.fitWidth") : t("reader.fitPage")}{" "}
+                {pdfLabel} · {wide ? t("reader.fitWidth") : t("reader.fitPage")}{" "}
                 <Icon name={wide ? "fitWidth" : "fitPage"} />
               </button>
             ) : (
@@ -370,7 +402,7 @@ export default function Reader({
           </div>
           <Tool
             className="room-tool"
-            label={pdf ? t("reader.paper") : t("settings.typography")}
+            label={pdf ? t("reader.display") : t("settings.typography")}
             aria-expanded={panel === "type"}
             symbol={pdf ? "sun" : "type"}
             onClick={() => selectPanel("type")}
@@ -388,6 +420,29 @@ export default function Reader({
             </div>
             {panel === "type" ? (
               <>
+                {canShowSpread && (
+                  <div
+                    className="face-row layout-row"
+                    role="group"
+                    aria-label={t("reader.layout")}
+                  >
+                    <span>{t("reader.layout")}</span>
+                    <div className="layout-choices">
+                      {(["single", "double"] as const).map((layout) => (
+                        <button
+                          key={layout}
+                          type="button"
+                          aria-pressed={prefs.pageLayout === layout}
+                          onClick={() =>
+                            void patchPrefs({ pageLayout: layout }).catch(fail)
+                          }
+                        >
+                          {t(`reader.${layout}`)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {!pdf && (
                   <TypeControls
                     prefs={prefs}
@@ -406,6 +461,9 @@ export default function Reader({
                     className="reset-reading"
                     onClick={() =>
                       void patchPrefs({
+                        ...(canShowSpread && {
+                          pageLayout: defaults.pageLayout,
+                        }),
                         size: defaults.size,
                         leading: defaults.leading,
                         fontCategory: defaults.fontCategory,

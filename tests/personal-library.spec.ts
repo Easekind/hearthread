@@ -27,27 +27,49 @@ for (const format of ["EPUB", "PDF"] as const) {
       await expect(page.locator(".pdf-fit")).toContainText("第 10 页", {
         timeout: 30000,
       });
+      await page.getByRole("button", { name: "阅读显示", exact: true }).click();
+      await page.getByRole("button", { name: "双屏", exact: true }).click();
+      await page.getByRole("button", { name: "关闭阅读显示" }).click();
+      await expect(page.locator(".pdf-fit")).toContainText("第 9–10 页");
+      await page.getByRole("button", { name: "目录", exact: true }).click();
+      await expect(
+        page.locator(".contents-list [aria-current=location]"),
+      ).toContainText("第 10 页");
+      await expect(
+        page.getByLabel("第 10 页", { exact: true }),
+      ).toBeInViewport();
+      await page.getByRole("button", { name: "关闭目录" }).click();
+      await page.getByRole("button", { name: "向下翻页" }).click();
+      await expect(page.locator(".pdf-fit")).toContainText("第 11–12 页");
+      await page.getByRole("button", { name: "向上翻页" }).click();
     } else {
       await expect(page.locator("foliate-view iframe").first()).toBeVisible({
         timeout: 30000,
       });
       await page.locator(".reading-layer").focus();
       await page.keyboard.press("Enter");
+      await page.getByRole("button", { name: "阅读排版", exact: true }).click();
+      await page.getByRole("button", { name: "双屏", exact: true }).click();
+      await page.getByRole("button", { name: "关闭阅读排版" }).click();
       await page.getByRole("button", { name: "目录", exact: true }).click();
       const entries = page.locator(".contents-list button");
       await expect(entries.nth(5)).toBeVisible();
       await entries.nth(5).click();
+      await expect(page.locator(".chapter-position")).toContainText("第 6 章");
+      await page.getByRole("button", { name: "目录", exact: true }).click();
+      await expect(entries.nth(5)).toHaveAttribute("aria-current", "location");
+      await expect(entries.nth(5)).toBeInViewport();
     }
     await page.getByRole("button", { name: "返回书库" }).click();
     await expect(page.locator(".reading-layer")).toHaveCount(0);
     await page.reload();
     await page.locator('[data-focus-book="' + id + '"]').dblclick();
     if (format === "PDF")
-      await expect(page.locator(".pdf-fit")).toContainText("第 10 页", {
+      await expect(page.locator(".pdf-fit")).toContainText("第 9–10 页", {
         timeout: 30000,
       });
     else
-      await expect(page.locator(".chapter-position")).not.toContainText("/ 0", {
+      await expect(page.locator(".chapter-position")).toContainText("第 6 章", {
         timeout: 30000,
       });
     await test

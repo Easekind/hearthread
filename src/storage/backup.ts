@@ -52,6 +52,7 @@ const schema = z.object({
       locale: z.enum(locales).default(defaults.locale),
       theme: z.enum(themeOptions),
       paper: z.enum(themeOptions),
+      pageLayout: z.enum(["single", "double"]).default(defaults.pageLayout),
       size: numeric.min(typeLimits.size.min).max(typeLimits.size.max),
       leading: numeric.min(typeLimits.leading.min).max(typeLimits.leading.max),
       fontCategory: z.enum(["serif", "sans"]),

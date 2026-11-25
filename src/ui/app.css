@@ -44,6 +44,13 @@
   text-align: center;
   background: var(--room-control);
 }
+.reader[data-page-layout="double"] .pdf-document {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(8px, 2vw, 24px);
+  padding-inline: clamp(8px, 2vw, 24px);
+}
 .pdf-sheet {
   position: relative;
   display: inline-block;
