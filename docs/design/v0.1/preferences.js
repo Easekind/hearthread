@@ -1,14 +1,11 @@
 const preferenceIcons={appearance:'sun',reading:'book',language:'language',storage:'storage',shortcuts:'keyboard',about:'info'};
 function preferencesContent() {
   const button=(action,label)=>`<button class="pref-action" data-action="${action}">${label}</button>`;
-  const toggle=(action,label,checked)=>`<button data-slot="switch" role="switch" data-action="${action}" aria-label="${label}" aria-checked="${checked}"><span data-slot="switch-thumb"></span></button>`;
   const group=(heading,body)=>`<section class="pref-group">${heading?`<h3>${heading}</h3>`:''}<div class="pref-rows">${body}</div></section>`;
   if (settingTab==='appearance') return `<div class="appearance-preview" aria-label="当前主题的书库预览"><div class="mini-window"><div class="mini-rail">${icon('library')}</div><div class="mini-library"><strong>我的书库</strong><div class="mini-shelf">${originalBooks.slice(0,3).map(b=>`<div>${cover(b)}</div>`).join('')}</div></div></div></div>
-    <div class="paper-choices">${paperChoices(shellTheme,'theme')}</div>
-    ${group('显示',settingRow('跟随系统外观','',toggle('system-theme','跟随系统外观',followSystem)))}
-    ${group('',settingRow('自定义主题','',button('custom-theme','添加主题')))}`;
+    <div class="paper-choices" role="group" aria-label="书库外观">${paperChoices(shellTheme,'theme')}</div>`;
   if (settingTab==='reading') return `<article class="type-specimen" style="--reading-face:${readerFonts()};--reader-size:${fontSize}px;--reader-leading:${leading}"><small>排版预览</small><p>清晨的湖面映着树影。<br>沿着岸边，再读一页。</p><p lang="en">Morning light on the water.</p></article>
-    ${group('正文',fontControls(true))}${group('',settingRow('自定义字体','OTF、TTF、WOFF2',button('custom-font','导入字体')))}`;
+    ${group('正文',fontControls())}${group('',settingRow(sampleFontImported?'Sora':'自定义字体','OTF、TTF、WOFF2',button('custom-font',sampleFontImported?'更换字体':'导入字体')))}`;
   if (settingTab==='language') return group('显示语言',settingRow('界面语言','',fieldMenu('locale','界面语言','简体中文'))+settingRow('自定义语言包','',button('language-pack','导入语言包')));
   if (settingTab==='storage') return group('此设备',settingRow('书库位置','~/Documents/hearthread · 示例路径',button('library-location','更改位置')))+group('备份与恢复',settingRow('导出完整书库','原始文件与阅读记录',button('export-library','导出备份'))+settingRow('从备份恢复','',button('restore-library','选择备份')));
   if (settingTab==='shortcuts') {

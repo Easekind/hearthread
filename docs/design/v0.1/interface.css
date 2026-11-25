@@ -6,6 +6,34 @@
   --dialog-time:200ms;
   --book-time:240ms;
 }
+
+/* The thumb paints inside a wider native drag target. */
+html,body {scrollbar-color:auto}
+html:has(.modal-backdrop,.reading-layer) {overflow:hidden}
+@media (pointer:fine) and (forced-colors:none) {
+  :root,.reading-layer {--scrollbar-ink:40 43 48}
+  :root:has(body.theme-dark),.reading-layer:has(.reading-room[data-paper=dark]) {--scrollbar-ink:228 230 234}
+
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar {width:16px;height:16px;background:transparent}
+    ::-webkit-scrollbar-track,::-webkit-scrollbar-corner {background:transparent}
+    :is(html,body):has(.library-scrim)::-webkit-scrollbar-track {background:var(--sheet-shade)}
+    ::-webkit-scrollbar-button {display:none}
+    ::-webkit-scrollbar-thumb {
+      border:2px solid transparent;background:rgb(var(--scrollbar-ink) / .32) padding-box
+    }
+    ::-webkit-scrollbar-thumb:vertical {border-left-width:10px;border-radius:12px 4px 4px 12px / 4px}
+    ::-webkit-scrollbar-thumb:horizontal {border-top-width:10px;border-radius:4px / 12px 12px 4px 4px}
+    ::-webkit-scrollbar-thumb:hover {background-color:rgb(var(--scrollbar-ink) / .48)}
+    ::-webkit-scrollbar-thumb:active {background-color:rgb(var(--scrollbar-ink) / .64)}
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    * {scrollbar-width:thin}
+    html,body,.reading-layer {scrollbar-color:rgb(var(--scrollbar-ink) / .42) transparent}
+    :is(html,body):has(.library-scrim) {scrollbar-color:rgb(var(--scrollbar-ink) / .42) var(--sheet-shade)}
+  }
+}
+
 .ui-glyph {stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 [data-action=toggle-nav][aria-expanded=true] .sidebar-pane {fill:currentColor}
 .ui-glyph[data-symbol=more] {fill:currentColor;stroke-width:1}
@@ -110,6 +138,7 @@ html[data-input=keyboard] .list-view tbody tr:has(:focus-visible) {background:va
 /* Form selections share the library category trigger and its anchored menu. */
 .menu.library-popup[popover] {inset:auto;margin:0}
 .field-trigger {min-width:6.25rem;max-width:min(60%,18rem);justify-content:space-between}
+.face-row .field-trigger span {min-width:0;white-space:normal;overflow-wrap:anywhere}
 .destination .field-trigger {margin-inline-start:auto}
 .reading-room .field-trigger {color:var(--reader-ink)}
 .reading-room .field-trigger[aria-expanded=true] {background:var(--room-control)}

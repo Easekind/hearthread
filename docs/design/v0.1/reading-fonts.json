@@ -1,0 +1,28 @@
+{
+  "serif": {
+    "stack": "Georgia, \"Songti SC\", SimSun, \"Noto Serif CJK SC\", serif",
+    "fonts": {
+      "Songti SC": "宋体（简）",
+      "Kaiti SC": "楷体（简）",
+      "SimSun": "宋体",
+      "KaiTi": "楷体",
+      "Noto Serif CJK SC": "Noto 宋体",
+      "Georgia": "Georgia",
+      "Times New Roman": "Times New Roman",
+      "Liberation Serif": "Liberation Serif"
+    }
+  },
+  "sans": {
+    "stack": "system-ui, \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
+    "fonts": {
+      "PingFang SC": "苹方（简）",
+      "Hiragino Sans GB": "冬青黑体",
+      "Microsoft YaHei": "微软雅黑",
+      "Noto Sans CJK SC": "Noto 黑体",
+      "Arial": "Arial",
+      "Helvetica Neue": "Helvetica Neue",
+      "Roboto": "Roboto",
+      "Liberation Sans": "Liberation Sans"
+    }
+  }
+}

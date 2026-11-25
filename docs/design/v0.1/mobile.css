@@ -7,7 +7,7 @@
   .room-search input,.studio-search {min-width:0}
   .paper-choice,.reset-reading,.pref-action,.library-dialog .modal-actions button,.type-slider [data-slot=slider] {min-height:44px}
   .library-popup,.modal,.file-review ul {overscroll-behavior:contain}
-  html:has(.studio.nav-open,.modal-backdrop:not([inert])) {overflow:hidden}
+  html:has(.studio.nav-open,.library-scrim) {overflow:hidden}
   .view-switch button {min-height:44px}
 }
 

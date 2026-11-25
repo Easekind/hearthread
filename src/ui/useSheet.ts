@@ -2,7 +2,6 @@ import { useEffect, useRef, type PointerEvent } from "react";
 /** The same spring drives the drawer entrance, touch drag and dismissal. */
 export function useSheet(close: () => void) {
   const drawer = useRef<HTMLElement>(null),
-    scrim = useRef<HTMLDivElement>(null),
     onClose = useRef(close);
   onClose.current = close;
   const motion = useRef({ position: 0, velocity: 0, frame: 0 }),
@@ -21,10 +20,10 @@ export function useSheet(close: () => void) {
     const p = motion.current.position;
     drawer.current.style.transform =
       (mobile() ? "translateY(" : "translateX(") + p + "px)";
-    if (scrim.current)
-      scrim.current.style.opacity = String(
-        Math.max(0, Math.min(1, 1 - p / extent())),
-      );
+    document.documentElement.style.setProperty(
+      "--sheet-opacity",
+      String(Math.max(0, Math.min(1, 1 - p / extent()))),
+    );
   }
   const reduced = () =>
     document.documentElement.dataset.input === "keyboard" ||
@@ -69,7 +68,10 @@ export function useSheet(close: () => void) {
     motion.current.position = reduced() ? 0 : extent();
     paint();
     settle(0);
-    return () => cancelAnimationFrame(motion.current.frame);
+    return () => {
+      cancelAnimationFrame(motion.current.frame);
+      document.documentElement.style.removeProperty("--sheet-opacity");
+    };
   }, []);
   function end(e: PointerEvent<HTMLDivElement>) {
     const d = drag.current;
@@ -89,7 +91,6 @@ export function useSheet(close: () => void) {
   }
   return {
     drawer,
-    scrim,
     dismiss: () => settle(extent()),
     handle: {
       onPointerDown(e: PointerEvent<HTMLDivElement>) {

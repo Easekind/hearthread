@@ -19,7 +19,7 @@ for (const theme of ["素白", "暖纸", "墨夜"]) {
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/#settings");
       await page.locator(".paper-choice").filter({ hasText: theme }).click();
-      await hoverCycle(page, page.getByRole("button", { name: "添加主题" }));
+      await hoverCycle(page, page.getByRole("button", { name: "跟随系统" }));
       await hoverCycle(
         page,
         page.locator(".preferences-nav [aria-current=page]"),
@@ -59,7 +59,7 @@ test("reader menu uses the reading paper and follows keyboard and mouse independ
     .locator(".room-panel .paper-choice")
     .filter({ hasText: "墨夜" })
     .click();
-  await page.locator(".room-panel .field-trigger").click();
+  await page.getByRole("button", { name: "字体类别，衬线" }).click();
   const menu = page.getByRole("menu");
   await expect(menu).toHaveCSS(
     "background-color",

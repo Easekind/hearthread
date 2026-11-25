@@ -21,6 +21,7 @@ export default defineConfig({
       },
     },
   ],
+  optimizeDeps: { include: ["fontkitten"] },
   server: {
     port: 1420,
     strictPort: true,

@@ -182,6 +182,9 @@ component(
   "function readerSpecimen(b,isPdf,isMd){" +
     specimen +
     ";return content}\n" +
+    "const readingFonts = " +
+    read("reading-fonts.json").trim() +
+    ";\n" +
     read("reading-room.js"),
 );
 replace(
@@ -297,6 +300,17 @@ replace(
 replace(",reduceEffects=false", "");
 replace("||!!document.querySelector('#reduced-preview')", "");
 html = html.replace(/,'reduce-motion':.*?(?=,'library-location':)/, "");
+html = html.replace(/,'custom-theme':.*?(?=,'custom-font':)/, "");
+html = html.replace(/,'system-theme':.*?(?=,'library-location':)/, "");
+replace(",followSystem=false;", ";");
+replace(
+  "followSystem=false;shellTheme=el.dataset.theme",
+  "shellTheme=el.dataset.theme",
+);
+replace(
+  "document.body.className=shellTheme==='light'?'':`theme-${shellTheme}`;",
+  "const theme=shellTheme==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):shellTheme;document.body.className=theme==='light'?'':`theme-${theme}`;",
+);
 replace(
   "const motionPreference=()=>matchMedia",
   "const motionPreference=()=>document.documentElement.dataset.input==='keyboard'||matchMedia",

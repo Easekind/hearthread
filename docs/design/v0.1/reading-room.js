@@ -1,9 +1,21 @@
-const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜'};
-let chineseFace = 'serif', latinFace = 'serif', pdfWide = false;
+const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜',system:'跟随系统'};
+let sampleFontImported = false;
+let fontCategory = 'serif', readingFont = 'default', pdfWide = false;
 const chapterMemory = new Map();
-const readerFonts = () => (latinFace==='serif'?'Georgia':'Arial')+', '+(chineseFace==='serif'?'var(--font-reading)':'var(--font-ui)');
+function hasSystemFont(name) {
+  const ctx=document.createElement('canvas').getContext('2d');
+  const sample='湖面映着树影 Wmil012';
+  ctx.font='40px monospace';
+  const fallback=ctx.measureText(sample).width;
+  ctx.font='40px "'+name+'", monospace';
+  return ctx.measureText(sample).width!==fallback;
+}
+const readerFonts = () => (readingFont==='default'?'':"'"+readingFont+"', ")+readingFonts[fontCategory].stack.replaceAll('"',"'");
+function resolvedPaper() {
+  return paper==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):paper;
+}
 function paperChoices(active, attribute) {
-  return Object.entries(pageColors).map(([value,label])=>`<button type="button" class="paper-choice" data-${attribute}="${value}" aria-pressed="${value===active}"><span class="paper-sample ${value}" aria-hidden="true">Aa</span><span>${label}</span>${value===active?icon('check'):''}</button>`).join('');
+  return Object.entries(pageColors).map(([value,label])=>`<button type="button" class="paper-choice" data-${attribute}="${value}" aria-pressed="${value===active}"><span class="paper-sample ${value}" aria-hidden="true">${value==='system'?icon('monitor'):'Aa'}</span><span>${label}</span>${value===active?icon('check'):''}</button>`).join('');
 }
 function rangeFill(value,min,max) {
   return (value-min)/(max-min)*100+'%';
@@ -11,15 +23,15 @@ function rangeFill(value,min,max) {
 function readingRange(id,label,min,max,step,value) {
   return `<input data-slot="slider" type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" style="--range-fill:${rangeFill(value,min,max)}">`;
 }
-function fontControls(includeLatin) {
+function fontControls() {
   function face(label,id,value) {
     return `<div class="face-row"><span>${label}</span>${fieldMenu(id,label,value)}</div>`;
   }
   function slider(label,id,min,max,step,value,unit) {
     return `<label class="type-slider">${label}<output for="${id}">${value}${unit}</output>${readingRange(id,label,min,max,step,value)}</label>`;
   }
-  return `<div class="type-controls">${face('中文字体','chinese-face',chineseFace)}${includeLatin?face('西文字体','latin-face',latinFace):''}
-    ${slider('字号','type-size',16,30,1,fontSize,' px')}${slider('行距','type-leading',1.5,2.4,.05,leading,' 倍')}</div>`;
+  return `<div class="type-controls">${face('字体类别','font-category',fontCategory)}${face('字体','reading-font',readingFont)}
+    ${slider('字号','type-size',12,30,1,fontSize,' px')}${slider('行距','type-leading',1,2.4,.05,leading,' 倍')}</div>`;
 }
 function paintType() {
   const surface=document.querySelector('.reader, .type-specimen');
@@ -33,11 +45,15 @@ document.addEventListener('input',event=>{
   if (input.matches('.chapter-position input,.type-slider input')) {
     input.style.setProperty('--range-fill',rangeFill(input.valueAsNumber,Number(input.min),Number(input.max)));
   }
-  if (!['type-size','type-leading','chinese-face','latin-face'].includes(input.id)) return;
+  if (!['type-size','type-leading','font-category','reading-font'].includes(input.id)) return;
   if (input.id==='type-size') fontSize=Number(input.value);
   if (input.id==='type-leading') leading=Number(input.value);
-  if (input.id==='chinese-face') chineseFace=input.value;
-  if (input.id==='latin-face') latinFace=input.value;
+  if (input.id==='font-category') {
+    fontCategory=input.value;
+    readingFont='default';
+    document.getElementById('reading-font').outerHTML=fieldMenu('reading-font','字体',readingFont);
+  }
+  if (input.id==='reading-font') readingFont=input.value;
   const output=input.parentElement.querySelector('output');
   if (output) output.value=input.value+(input.id==='type-size'?' px':' 倍');
   paintType();
@@ -55,23 +71,23 @@ function reader() {
     <button class="room-tool" data-action="next" aria-label="下一章" ${chapter===chapterNames.length?'disabled':''}>${icon('next')}</button>`
     :pdf?`<button class="pdf-fit" data-action="pdf-scale" aria-label="切换 PDF 显示宽度" aria-pressed="${pdfWide}">第 3 页 · ${pdfWide?'适合宽度':'适合页面'} ${icon(pdfWide?'fitWidth':'fitPage')}</button>`
     :`${tool('prev','previous','向上翻页')}<span class="document-position">Markdown</span>${tool('next','next','向下翻页')}`;
-  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${paper}" data-pdf-wide="${pdfWide}" style="${paperStyle}">
+  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${resolvedPaper()}" data-pdf-wide="${pdfWide}" style="${paperStyle}">
     <button class="reading-tools-access" data-action="show-reading-tools" ${focusMode?'':'hidden'}>显示阅读工具</button>
     <header class="room-head" ${focusMode?'inert':''}><button class="room-back" aria-label="返回书库" data-route="library">${icon('back')}<span>书库</span></button>
     <div class="room-identity"><strong>${esc(book.title)}</strong><small>${esc(book.author.replace(' / 示例文档',''))}</small></div>
     <div class="room-actions">${tool('reader-search','search','书内搜索')}</div></header>
     ${content}
     <footer class="room-dock" aria-label="阅读工具" ${focusMode?'inert':''}>${tool('toc','contents','目录')}<div class="room-navigation">${navigation}</div>
-    ${pdf?tool('paper-toggle',paper==='dark'?'sun':'moon','切换明暗主题'):tool('typography','type','阅读排版')}</footer>
+    ${pdf?tool('typography','sun','阅读纸色'):tool('typography','type','阅读排版')}</footer>
     ${readerPanel?readingPanel():''}</main>`;
 }
 let passageQuery='';
 const documentPassages='.pdf-page p,.markdown-content p,.markdown-content li,.markdown-content blockquote';
 function readingPanel() {
-  const heading={toc:'目录',search:'书内搜索',type:'阅读排版'}[readerPanel];
+  const heading={toc:'目录',search:'书内搜索',type:route==='pdf'?'阅读纸色':'阅读排版'}[readerPanel];
   let body;
-  if (readerPanel==='type') body=`${fontControls(false)}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
-    <button class="reset-reading" data-action="reset-type">恢复默认排版</button>`;
+  if (readerPanel==='type') body=`${route==='pdf'?'':fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
+    ${route==='pdf'?'':'<button class="reset-reading" data-action="reset-type">恢复默认排版</button>'}`;
   if (readerPanel==='toc') {
     const headings=route==='reader'?chapterNames:specimenSections().map(h=>h.textContent);
     body=`<div class="contents-list">${headings.map((h,i)=>`<button type="button" data-section="${i}" ${route==='reader'&&i===chapter-1?'aria-current="location"':''}><small>${String(i+1).padStart(2,'0')}</small><span>${esc(h)}</span></button>`).join('')}</div>`;
@@ -98,7 +114,7 @@ function documentResults(q) {
 function applyReadingPaper(value) {
   paper=value;
   const room=document.querySelector('.reading-room');
-  room.dataset.paper=paper;
+  room.dataset.paper=resolvedPaper();
   syncBrowserChrome();
   const choices=room.querySelector('[data-paper].paper-choice')?.parentElement;
   if (!choices) return;

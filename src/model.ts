@@ -1,5 +1,6 @@
 export type Format = "EPUB" | "PDF" | "MD";
-export type Paper = "light" | "paper" | "dark";
+export const themeOptions = ["light", "paper", "dark", "system"] as const;
+export type Theme = (typeof themeOptions)[number];
 export interface Book {
   id: string;
   title: string;
@@ -21,17 +22,15 @@ export interface Book {
   deleted?: boolean;
 }
 export interface Preferences {
-  theme: Paper;
-  paper: Paper;
+  theme: Theme;
+  paper: Theme;
   size: number;
   leading: number;
-  chinese: string;
-  latin: string;
-  system: boolean;
+  fontCategory: "serif" | "sans";
+  fontFamily: string;
   view: "grid" | "list";
   sort: "recent" | "added" | "title";
   customFont?: string;
-  tint?: string;
 }
 export interface Catalog {
   books: Book[];
@@ -43,9 +42,9 @@ export const defaults: Preferences = {
   paper: "light",
   size: 20,
   leading: 1.95,
-  chinese: "serif",
-  latin: "serif",
-  system: false,
+  fontCategory: "serif",
+  fontFamily: "default",
+  customFont: undefined,
   view: "grid",
   sort: "recent",
 };

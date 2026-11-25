@@ -7,8 +7,7 @@ function sheetExtent(panel) {
 function paintSheet(panel) {
   const distance = sheetMotion.position;
   panel.style.transform = compactSheet() ? `translateY(${distance}px)` : `translateX(${distance}px)`;
-  const scrim = document.querySelector('.library-scrim');
-  if (scrim) scrim.style.opacity = Math.min(1, Math.max(0, 1 - distance / sheetExtent(panel)));
+  document.documentElement.style.setProperty('--sheet-opacity', String(Math.min(1, Math.max(0, 1 - distance / sheetExtent(panel)))));
 }
 function settleSheet(target) {
   const state = sheetMotion;

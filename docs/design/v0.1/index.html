@@ -371,7 +371,9 @@ body{font-optical-sizing:auto;letter-spacing:normal}
 
 .dock-cover{flex:none;border-radius:2px;box-shadow:0 2px 4px #0002}.dock-book{gap:12px}.dock-book strong{font-size:.875rem;font-weight:620}
 .wall-select:active .wall-object{scale:.975}.nav-item:active,.view-switch button:active,.read-button:active{scale:.97}
-.library-drawer{border-radius:22px}.sheet-grab{display:none}.library-scrim{background:rgba(23,22,20,.23)}
+:root {--sheet-shade:rgb(23 22 20 / calc(.23 * var(--sheet-opacity,1)))}
+.library-drawer{border-radius:22px;overscroll-behavior:contain}.sheet-grab{display:none}
+.library-scrim{background:var(--sheet-shade);overflow:hidden;overscroll-behavior:contain;touch-action:none}
 @media(max-width:900px){.studio.nav-open .studio-nav{width:244px;top:8px;bottom:8px;left:8px}.studio.nav-open .brand-wordmark{max-width:132px}.studio-search{margin-left:auto}.reading-dock{width:min(590px,calc(100% - 32px))}}
 @media(max-width:600px){
  .studio-topbar{height:64px}.topbar-left{margin:0}.heading-name h1{font-size:1.875rem}.studio-heading{margin-bottom:12px}
@@ -468,15 +470,15 @@ body{font-optical-sizing:auto;letter-spacing:normal}
   .studio.nav-open .nav-main {margin-top:24px}
 }
 /* The reader scrolls independently of the library beneath it. */
-html:has(.reading-layer) {overflow:hidden;scrollbar-width:none}
-.reading-layer {overscroll-behavior:contain}
-.reading-layer,.reading-layer * {scrollbar-width:none}
-html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.reading-layer *::-webkit-scrollbar {display:none}
+.reading-layer {--reader-paper:#fcfbf8;overscroll-behavior:contain;background:var(--reader-paper)}
+.reading-layer:has(> .reading-room[data-paper=paper]) {--reader-paper:#f5efdf}
+.reading-layer:has(> .reading-room[data-paper=dark]) {--reader-paper:#202220}
+.reading-room[data-paper] {--reader-paper:inherit}
 
 /* Reading paper and the two layers above it: controls and popovers. */
-.reading-room {--reader-paper:#fcfbf8;--reader-ink:#252621;--room-muted:#62645e;--room-line:#d9dad3;--room-control:#f2f1ec;--room-accent:#a4402f;--color-muted:var(--room-muted);--color-ink:var(--reader-ink);--color-paper:var(--reader-paper);--color-paper-2:var(--room-control);min-height:100dvh;background:var(--reader-paper);color:var(--reader-ink);font-family:var(--font-ui)}
-.reading-room[data-paper=paper] {--reader-paper:#f5efdf;--reader-ink:#3a332a;--room-muted:#696254;--room-line:#d9cfba;--room-control:#eae2ce}
-.reading-room[data-paper=dark] {--reader-paper:#202220;--reader-ink:#e6e7df;--room-muted:#b6b9af;--room-line:#484b44;--room-control:#30332e;--room-accent:#ff9981;color-scheme:dark}
+.reading-room {--reader-ink:#252621;--room-muted:#62645e;--room-line:#d9dad3;--room-control:#f2f1ec;--room-accent:#a4402f;--color-muted:var(--room-muted);--color-ink:var(--reader-ink);--color-paper:var(--reader-paper);--color-paper-2:var(--room-control);min-height:100dvh;background:var(--reader-paper);color:var(--reader-ink);font-family:var(--font-ui)}
+.reading-room[data-paper=paper] {--reader-ink:#3a332a;--room-muted:#696254;--room-line:#d9cfba;--room-control:#eae2ce}
+.reading-room[data-paper=dark] {--reader-ink:#e6e7df;--room-muted:#b6b9af;--room-line:#484b44;--room-control:#30332e;--room-accent:#ff9981;color-scheme:dark}
 .room-head {height:4.5rem;position:sticky;top:0;z-index:5;padding:0 clamp(1rem,4vw,4rem);display:grid;grid-template-columns:1fr minmax(0,50%) 1fr;align-items:center;background:color-mix(in srgb,var(--reader-paper) 89%,transparent);backdrop-filter:blur(16px)}
 .room-actions {display:flex;justify-content:flex-end;gap:4px}.room-identity {text-align:center;min-width:0}
 .room-identity strong,.room-identity small {display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -516,34 +518,20 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 .book-progress span {display:block;width:var(--progress);height:100%;background:var(--range-ink)}
 /* shadcn/ui controls use the ink and paper of their current surface. */
 .preferences {--range-rail:color-mix(in srgb,var(--color-ink) 24%,var(--selected-nav))}
-[data-slot=switch],[data-slot=slider] {overflow:visible}
-[data-slot=switch] {
-  position:relative;display:inline-flex;flex:none;align-items:center;width:32px;height:19px;
-  padding:0 1px;border:1px solid transparent;border-radius:999px;background:var(--range-rail)
-}
-[data-slot=switch]::after {content:"";position:absolute;inset:-13px -6px}
-[data-slot=switch][aria-checked=true] {background:var(--color-ink)}
-[data-slot=switch-thumb] {
-  width:15px;height:15px;border-radius:50%;background:var(--solid-material);
-  box-shadow:0 1px 3px #0003;pointer-events:none;transition:transform 150ms ease-out
-}
-[data-slot=switch][aria-checked=true] [data-slot=switch-thumb] {transform:translateX(13px)}
-[data-slot=slider] {display:flex;position:relative;align-items:center;touch-action:none;user-select:none;cursor:pointer;background:transparent}
+[data-slot=slider] {overflow:visible;display:flex;position:relative;align-items:center;touch-action:none;user-select:none;cursor:pointer;background:transparent}
 [data-slot=slider-track] {position:relative;flex:1;height:6px;border-radius:999px;background:var(--range-rail);overflow:hidden}
 [data-slot=slider-range] {position:absolute;height:100%;background:var(--color-ink)}
 [data-slot=slider-thumb] {
   display:block;box-sizing:border-box;width:16px;height:16px;border-radius:50%;border:1px solid var(--color-ink);
   background:var(--color-paper);box-shadow:0 1px 3px #0002
 }
-[data-slot=switch]:focus-visible,[data-slot=slider-thumb]:focus-visible {outline:2px solid var(--color-ink);outline-offset:3px}
+[data-slot=slider-thumb]:focus-visible {outline:2px solid var(--color-ink);outline-offset:3px}
 @media (hover:hover) and (pointer:fine) {
-  [data-slot=switch]:enabled:hover {background:color-mix(in srgb,var(--color-ink) var(--hover-tint),var(--range-rail))}
-  [data-slot=switch][aria-checked=true]:hover {background:color-mix(in srgb,var(--color-paper) var(--hover-tint),var(--color-ink))}
   [data-slot=slider-thumb]:hover {box-shadow:0 0 0 4px var(--range-rail)}
 }
 @media (forced-colors:active) {
-  [data-slot=slider-track],[data-slot=switch] {border:1px solid ButtonText}
-  [data-slot=slider-range],[data-slot=switch-thumb] {background:ButtonText}
+  [data-slot=slider-track] {border:1px solid ButtonText}
+  [data-slot=slider-range] {background:ButtonText}
 }
 /* The standalone edition uses a native range input for the same slider. */
 @media (forced-colors:none) {
@@ -564,6 +552,9 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 }
 .type-slider output {color:var(--room-muted,var(--color-muted));font-variant-numeric:tabular-nums}
 .paper-choices {display:flex;gap:6px;margin:17px 0}.paper-choice {flex:1;display:flex;align-items:center;justify-content:center;gap:5px;min-height:42px;border:1px solid var(--room-line,var(--material-edge));border-radius:10px;color:inherit;font-size:.78rem;background:transparent}
+.room-panel .paper-choices {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.preferences .paper-choices {display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.paper-sample.system {background:var(--color-paper-2);color:var(--color-ink)}
 .paper-choice[aria-pressed=true] {border-color:currentColor}.paper-choice svg {width:12px!important;height:12px!important}
 .paper-sample {display:grid;place-items:center;width:25px;height:25px;border-radius:6px;font:14px Georgia,serif;box-shadow:inset 0 0 0 1px #7773}
 .paper-sample.light {background:#fcfbf8;color:#252621}.paper-sample.paper {background:#f5efdf;color:#3a332a}.paper-sample.dark {background:#202220;color:#e6e7df}
@@ -597,9 +588,10 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
 .pref-rows {padding:0 14px;border-radius:13px;border:1px solid var(--material-edge);background:var(--selected-nav)}.pref-rows .setting-row {min-height:55px;padding:10px 0;border:0;font-size:.85rem}.pref-rows .setting-row+.setting-row {border-top:1px solid var(--material-edge)}
 .pref-rows .setting-row small {overflow-wrap:anywhere}.pref-action,.pref-rows .key {flex:none;border-radius:8px;background:var(--color-paper-2);padding:7px 10px;color:var(--color-ink);font-size:.78rem}
 .pref-rows .type-controls {padding:14px 0}.type-specimen {padding:19px 22px;background:var(--color-paper-2);border-radius:13px}
-.type-specimen p {font:var(--reader-size)/var(--reader-leading) var(--reading-face);margin-top:8px}.type-specimen p[lang=en] {font-size:calc(var(--reader-size) * .88)}
+.type-specimen p {font:var(--reader-size)/var(--reader-leading) var(--reading-face);margin-top:8px}
 .product-signature {display:grid;justify-items:start;gap:8px;padding-block:16px}.product-signature>svg {fill:var(--brand-thread);stroke:none;width:40px!important;height:40px!important}.product-signature strong {font:600 1.8rem var(--font-ui);letter-spacing:-.06em}.product-signature small {color:var(--color-muted)}
 @media(max-width:600px){
+ .preferences .paper-choices {grid-template-columns:repeat(2,minmax(0,1fr))}
  .room-head {height:3.7rem;padding-inline:8px;grid-template-columns:1fr minmax(0,42%) 1fr}.room-actions {gap:0}.room-actions button {padding:0}.room-back span {display:none}
  .room-dock {bottom:max(10px,env(safe-area-inset-bottom));gap:3px}.room-panel {bottom:max(78px,calc(env(safe-area-inset-bottom) + 68px))}.room-panel.panel-search {top:60px;right:12px}
  .reading-room .reading-content {padding:2.1rem 1.35rem 7rem}.reading-room .reading-content h1 {margin-bottom:1em}
@@ -625,6 +617,34 @@ html:has(.reading-layer)::-webkit-scrollbar,.reading-layer::-webkit-scrollbar,.r
   --dialog-time:200ms;
   --book-time:240ms;
 }
+
+/* The thumb paints inside a wider native drag target. */
+html,body {scrollbar-color:auto}
+html:has(.modal-backdrop,.reading-layer) {overflow:hidden}
+@media (pointer:fine) and (forced-colors:none) {
+  :root,.reading-layer {--scrollbar-ink:40 43 48}
+  :root:has(body.theme-dark),.reading-layer:has(.reading-room[data-paper=dark]) {--scrollbar-ink:228 230 234}
+
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar {width:16px;height:16px;background:transparent}
+    ::-webkit-scrollbar-track,::-webkit-scrollbar-corner {background:transparent}
+    :is(html,body):has(.library-scrim)::-webkit-scrollbar-track {background:var(--sheet-shade)}
+    ::-webkit-scrollbar-button {display:none}
+    ::-webkit-scrollbar-thumb {
+      border:2px solid transparent;background:rgb(var(--scrollbar-ink) / .32) padding-box
+    }
+    ::-webkit-scrollbar-thumb:vertical {border-left-width:10px;border-radius:12px 4px 4px 12px / 4px}
+    ::-webkit-scrollbar-thumb:horizontal {border-top-width:10px;border-radius:4px / 12px 12px 4px 4px}
+    ::-webkit-scrollbar-thumb:hover {background-color:rgb(var(--scrollbar-ink) / .48)}
+    ::-webkit-scrollbar-thumb:active {background-color:rgb(var(--scrollbar-ink) / .64)}
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    * {scrollbar-width:thin}
+    html,body,.reading-layer {scrollbar-color:rgb(var(--scrollbar-ink) / .42) transparent}
+    :is(html,body):has(.library-scrim) {scrollbar-color:rgb(var(--scrollbar-ink) / .42) var(--sheet-shade)}
+  }
+}
+
 .ui-glyph {stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 [data-action=toggle-nav][aria-expanded=true] .sidebar-pane {fill:currentColor}
 .ui-glyph[data-symbol=more] {fill:currentColor;stroke-width:1}
@@ -729,6 +749,7 @@ html[data-input=keyboard] .list-view tbody tr:has(:focus-visible) {background:va
 /* Form selections share the library category trigger and its anchored menu. */
 .menu.library-popup[popover] {inset:auto;margin:0}
 .field-trigger {min-width:6.25rem;max-width:min(60%,18rem);justify-content:space-between}
+.face-row .field-trigger span {min-width:0;white-space:normal;overflow-wrap:anywhere}
 .destination .field-trigger {margin-inline-start:auto}
 .reading-room .field-trigger {color:var(--reader-ink)}
 .reading-room .field-trigger[aria-expanded=true] {background:var(--room-control)}
@@ -777,7 +798,7 @@ html[data-input=pointer] .library-popup button:focus {outline:none}
   .room-search input,.studio-search {min-width:0}
   .paper-choice,.reset-reading,.pref-action,.library-dialog .modal-actions button,.type-slider [data-slot=slider] {min-height:44px}
   .library-popup,.modal,.file-review ul {overscroll-behavior:contain}
-  html:has(.studio.nav-open,.modal-backdrop:not([inert])) {overflow:hidden}
+  html:has(.studio.nav-open,.library-scrim) {overflow:hidden}
   .view-switch button {min-height:44px}
 }
 
@@ -1401,7 +1422,7 @@ originalBooks.push(
 let books=structuredClone(originalBooks),route='library',view='grid',filter='all',scope='all',folder='文学与随笔',selected=new Set(),batch=false,activeBook=1,chapter=2,paper='light',settingTab='appearance',shellTheme='light',readerPanel='',fontSize=20,leading=1.95,focusMode=false,query='',sort='recent';
 // Demonstration reading order; opening a book advances it for this preview only.
 let readOrder=12;books.forEach((b,i)=>{b.lastReadOrder=b.progress?12-i:0});
-let navCompact=false,mobileNav=false,followSystem=false;
+let navCompact=false,mobileNav=false;
 const folders=['文学与随笔','设计与技术','随手收藏'];
 const chapterNames=['林间的清晨','我生活的地方','阅读与独处','湖畔的四季'];
 const prose=[
@@ -1466,6 +1487,7 @@ function fieldOptions(id) {
   if (id==='preference-section') return Object.entries(settingNames);
   if (id==='locale') return ['简体中文','繁體中文','English'].map(name=>[name,name]);
   if (id==='import-folder' || id==='move-folder') return folders.map(name=>[name,name]);
+  if (id==='reading-font') return [['default','系统默认'], ...Object.entries(readingFonts[fontCategory].fonts).filter(([name])=>hasSystemFont(name)), ...(sampleFontImported?[['Sora','Sora（已导入）']]:[])];
   return [['serif','衬线'],['sans','无衬线']];
 }
 
@@ -1662,12 +1684,52 @@ function library(){return shell(libraryContents())}
 function libraryContents(){const list=visibleBooks();return `<header class="studio-heading"><div class="heading-name"><h1>${query?'搜索藏书':'我的书库'}</h1><span>${list.length} 本</span></div><div class="view-switch" aria-label="书库视图"><button type="button" data-action="grid" class="${view==='grid'?'active':''}" aria-pressed="${view==='grid'}">${icon('grid')}书墙</button><button type="button" data-action="list" class="${view==='list'?'active':''}" aria-pressed="${view==='list'}">${icon('list')}列表</button></div></header>${libraryTools()}${batch ? managementBar(list) : ""}${list.length?(view==='grid'?spatialShelf(list):bookList(list)):emptyLibrary()}`}
 
 function readerSpecimen(b,isPdf,isMd){const content=isPdf?`<div class="pdf-stage"><article class="pdf-page"><div class="pdf-topline row between"><span>hearthread / Design notes</span><span>03</span></div><h1>The Architecture<br>of Reading</h1><p class="muted small" style="font-family:var(--font)">An original sample essay / November 2026</p><h2>Space is part of the sentence.</h2><p>A reading interface is a place to spend time. Its structure should help the eye find the next line, and help the mind stay with the thought.</p><div class="pdf-figure"><span>Find a book</span> / <span>Find your place</span> / <span>Keep reading</span></div><div class="pdf-cols"><p>A library gives things a place. It makes a growing collection understandable without asking every book to compete for attention. A cover can provide a useful landmark; a quiet list can make a larger collection easier to navigate.</p><p>The reading view has a different responsibility. Here, controls should be available without becoming the subject. The width of a line, the rhythm between paragraphs, and the contrast of the page all contribute to the experience.</p><p>Returning to a book should feel continuous. A reader remembers a sentence, a chapter, or a passage. Page numbers change when type changes. The place in the text should remain.</p><p>Good defaults are a form of care. They make the first page comfortable while leaving room for people to choose what works best for them.</p></div><h2>Keep the essential things close.</h2><p>Search, contents, and typography belong within reach. Everything else can wait until the book is closed.</p><p class="small muted" style="margin-top:var(--space-px-48);font-family:var(--font)">Design specimen / This is a typeset HTML sample, not a rendered PDF.</p></article></div>`:isMd?`<article class="reading-content markdown-content"><h1>${esc(b.title)}</h1><p class="muted">有些路，不必急着走完。</p><h2>把时间还给脚步</h2><p>周末收起日程表，沿着山脚的小路向上。树叶仍然带着清晨的水汽，山谷里的声音，比城里慢了半拍。</p><blockquote>记录不是为了抓住每一分钟，而是为了记得，有些时刻曾经让人停下来。</blockquote><h2>放进背包的东西</h2><ul><li>一本读到一半的书</li><li>铅笔、纸，以及不赶路的心情</li><li>水和一件轻薄的外套</li></ul><h2>一点小小的计划</h2><table><thead><tr><th>路段</th><th>停留</th><th>随记</th></tr></thead><tbody><tr><td>山脚 / 竹林</td><td>20 分钟</td><td>听风经过</td></tr><tr><td>竹林 / 湖边</td><td>40 分钟</td><td>坐下读几页书</td></tr></tbody></table><h2>一个朴素的约定</h2><pre><code>leave_the_noise_behind();\nopen_a_book();\ntake_your_time();</code></pre><p class="chapter-end">hearthread 原创示例 / 设计稿排版</p></article>`:`<article class="reading-content"><div class="chapter-kicker">第 ${chapter} 章</div><h1>${chapterNames[chapter-1]}</h1>${prose[chapter-1].map((p,i)=>`<p class="${i===0?'opening':''}">${p}</p>`).join('')}<div class="chapter-end">本页为原创排版样文，非《${esc(b.title)}》原文</div></article>`;return content}
-const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜'};
-let chineseFace = 'serif', latinFace = 'serif', pdfWide = false;
+const readingFonts = {
+  "serif": {
+    "stack": "Georgia, \"Songti SC\", SimSun, \"Noto Serif CJK SC\", serif",
+    "fonts": {
+      "Songti SC": "宋体（简）",
+      "Kaiti SC": "楷体（简）",
+      "SimSun": "宋体",
+      "KaiTi": "楷体",
+      "Noto Serif CJK SC": "Noto 宋体",
+      "Georgia": "Georgia",
+      "Times New Roman": "Times New Roman",
+      "Liberation Serif": "Liberation Serif"
+    }
+  },
+  "sans": {
+    "stack": "system-ui, \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
+    "fonts": {
+      "PingFang SC": "苹方（简）",
+      "Hiragino Sans GB": "冬青黑体",
+      "Microsoft YaHei": "微软雅黑",
+      "Noto Sans CJK SC": "Noto 黑体",
+      "Arial": "Arial",
+      "Helvetica Neue": "Helvetica Neue",
+      "Roboto": "Roboto",
+      "Liberation Sans": "Liberation Sans"
+    }
+  }
+};
+const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜',system:'跟随系统'};
+let sampleFontImported = false;
+let fontCategory = 'serif', readingFont = 'default', pdfWide = false;
 const chapterMemory = new Map();
-const readerFonts = () => (latinFace==='serif'?'Georgia':'Arial')+', '+(chineseFace==='serif'?'var(--font-reading)':'var(--font-ui)');
+function hasSystemFont(name) {
+  const ctx=document.createElement('canvas').getContext('2d');
+  const sample='湖面映着树影 Wmil012';
+  ctx.font='40px monospace';
+  const fallback=ctx.measureText(sample).width;
+  ctx.font='40px "'+name+'", monospace';
+  return ctx.measureText(sample).width!==fallback;
+}
+const readerFonts = () => (readingFont==='default'?'':"'"+readingFont+"', ")+readingFonts[fontCategory].stack.replaceAll('"',"'");
+function resolvedPaper() {
+  return paper==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):paper;
+}
 function paperChoices(active, attribute) {
-  return Object.entries(pageColors).map(([value,label])=>`<button type="button" class="paper-choice" data-${attribute}="${value}" aria-pressed="${value===active}"><span class="paper-sample ${value}" aria-hidden="true">Aa</span><span>${label}</span>${value===active?icon('check'):''}</button>`).join('');
+  return Object.entries(pageColors).map(([value,label])=>`<button type="button" class="paper-choice" data-${attribute}="${value}" aria-pressed="${value===active}"><span class="paper-sample ${value}" aria-hidden="true">${value==='system'?icon('monitor'):'Aa'}</span><span>${label}</span>${value===active?icon('check'):''}</button>`).join('');
 }
 function rangeFill(value,min,max) {
   return (value-min)/(max-min)*100+'%';
@@ -1675,15 +1737,15 @@ function rangeFill(value,min,max) {
 function readingRange(id,label,min,max,step,value) {
   return `<input data-slot="slider" type="range" id="${id}" aria-label="${label}" min="${min}" max="${max}" step="${step}" value="${value}" style="--range-fill:${rangeFill(value,min,max)}">`;
 }
-function fontControls(includeLatin) {
+function fontControls() {
   function face(label,id,value) {
     return `<div class="face-row"><span>${label}</span>${fieldMenu(id,label,value)}</div>`;
   }
   function slider(label,id,min,max,step,value,unit) {
     return `<label class="type-slider">${label}<output for="${id}">${value}${unit}</output>${readingRange(id,label,min,max,step,value)}</label>`;
   }
-  return `<div class="type-controls">${face('中文字体','chinese-face',chineseFace)}${includeLatin?face('西文字体','latin-face',latinFace):''}
-    ${slider('字号','type-size',16,30,1,fontSize,' px')}${slider('行距','type-leading',1.5,2.4,.05,leading,' 倍')}</div>`;
+  return `<div class="type-controls">${face('字体类别','font-category',fontCategory)}${face('字体','reading-font',readingFont)}
+    ${slider('字号','type-size',12,30,1,fontSize,' px')}${slider('行距','type-leading',1,2.4,.05,leading,' 倍')}</div>`;
 }
 function paintType() {
   const surface=document.querySelector('.reader, .type-specimen');
@@ -1697,11 +1759,15 @@ document.addEventListener('input',event=>{
   if (input.matches('.chapter-position input,.type-slider input')) {
     input.style.setProperty('--range-fill',rangeFill(input.valueAsNumber,Number(input.min),Number(input.max)));
   }
-  if (!['type-size','type-leading','chinese-face','latin-face'].includes(input.id)) return;
+  if (!['type-size','type-leading','font-category','reading-font'].includes(input.id)) return;
   if (input.id==='type-size') fontSize=Number(input.value);
   if (input.id==='type-leading') leading=Number(input.value);
-  if (input.id==='chinese-face') chineseFace=input.value;
-  if (input.id==='latin-face') latinFace=input.value;
+  if (input.id==='font-category') {
+    fontCategory=input.value;
+    readingFont='default';
+    document.getElementById('reading-font').outerHTML=fieldMenu('reading-font','字体',readingFont);
+  }
+  if (input.id==='reading-font') readingFont=input.value;
   const output=input.parentElement.querySelector('output');
   if (output) output.value=input.value+(input.id==='type-size'?' px':' 倍');
   paintType();
@@ -1719,23 +1785,23 @@ function reader() {
     <button class="room-tool" data-action="next" aria-label="下一章" ${chapter===chapterNames.length?'disabled':''}>${icon('next')}</button>`
     :pdf?`<button class="pdf-fit" data-action="pdf-scale" aria-label="切换 PDF 显示宽度" aria-pressed="${pdfWide}">第 3 页 · ${pdfWide?'适合宽度':'适合页面'} ${icon(pdfWide?'fitWidth':'fitPage')}</button>`
     :`${tool('prev','previous','向上翻页')}<span class="document-position">Markdown</span>${tool('next','next','向下翻页')}`;
-  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${paper}" data-pdf-wide="${pdfWide}" style="${paperStyle}">
+  return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${resolvedPaper()}" data-pdf-wide="${pdfWide}" style="${paperStyle}">
     <button class="reading-tools-access" data-action="show-reading-tools" ${focusMode?'':'hidden'}>显示阅读工具</button>
     <header class="room-head" ${focusMode?'inert':''}><button class="room-back" aria-label="返回书库" data-route="library">${icon('back')}<span>书库</span></button>
     <div class="room-identity"><strong>${esc(book.title)}</strong><small>${esc(book.author.replace(' / 示例文档',''))}</small></div>
     <div class="room-actions">${tool('reader-search','search','书内搜索')}</div></header>
     ${content}
     <footer class="room-dock" aria-label="阅读工具" ${focusMode?'inert':''}>${tool('toc','contents','目录')}<div class="room-navigation">${navigation}</div>
-    ${pdf?tool('paper-toggle',paper==='dark'?'sun':'moon','切换明暗主题'):tool('typography','type','阅读排版')}</footer>
+    ${pdf?tool('typography','sun','阅读纸色'):tool('typography','type','阅读排版')}</footer>
     ${readerPanel?readingPanel():''}</main>`;
 }
 let passageQuery='';
 const documentPassages='.pdf-page p,.markdown-content p,.markdown-content li,.markdown-content blockquote';
 function readingPanel() {
-  const heading={toc:'目录',search:'书内搜索',type:'阅读排版'}[readerPanel];
+  const heading={toc:'目录',search:'书内搜索',type:route==='pdf'?'阅读纸色':'阅读排版'}[readerPanel];
   let body;
-  if (readerPanel==='type') body=`${fontControls(false)}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
-    <button class="reset-reading" data-action="reset-type">恢复默认排版</button>`;
+  if (readerPanel==='type') body=`${route==='pdf'?'':fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
+    ${route==='pdf'?'':'<button class="reset-reading" data-action="reset-type">恢复默认排版</button>'}`;
   if (readerPanel==='toc') {
     const headings=route==='reader'?chapterNames:specimenSections().map(h=>h.textContent);
     body=`<div class="contents-list">${headings.map((h,i)=>`<button type="button" data-section="${i}" ${route==='reader'&&i===chapter-1?'aria-current="location"':''}><small>${String(i+1).padStart(2,'0')}</small><span>${esc(h)}</span></button>`).join('')}</div>`;
@@ -1762,7 +1828,7 @@ function documentResults(q) {
 function applyReadingPaper(value) {
   paper=value;
   const room=document.querySelector('.reading-room');
-  room.dataset.paper=paper;
+  room.dataset.paper=resolvedPaper();
   syncBrowserChrome();
   const choices=room.querySelector('[data-paper].paper-choice')?.parentElement;
   if (!choices) return;
@@ -1901,14 +1967,11 @@ function settingRow(title,desc,control){return `<div class="setting-row"><div>${
 const preferenceIcons={appearance:'sun',reading:'book',language:'language',storage:'storage',shortcuts:'keyboard',about:'info'};
 function preferencesContent() {
   const button=(action,label)=>`<button class="pref-action" data-action="${action}">${label}</button>`;
-  const toggle=(action,label,checked)=>`<button data-slot="switch" role="switch" data-action="${action}" aria-label="${label}" aria-checked="${checked}"><span data-slot="switch-thumb"></span></button>`;
   const group=(heading,body)=>`<section class="pref-group">${heading?`<h3>${heading}</h3>`:''}<div class="pref-rows">${body}</div></section>`;
   if (settingTab==='appearance') return `<div class="appearance-preview" aria-label="当前主题的书库预览"><div class="mini-window"><div class="mini-rail">${icon('library')}</div><div class="mini-library"><strong>我的书库</strong><div class="mini-shelf">${originalBooks.slice(0,3).map(b=>`<div>${cover(b)}</div>`).join('')}</div></div></div></div>
-    <div class="paper-choices">${paperChoices(shellTheme,'theme')}</div>
-    ${group('显示',settingRow('跟随系统外观','',toggle('system-theme','跟随系统外观',followSystem)))}
-    ${group('',settingRow('自定义主题','',button('custom-theme','添加主题')))}`;
+    <div class="paper-choices" role="group" aria-label="书库外观">${paperChoices(shellTheme,'theme')}</div>`;
   if (settingTab==='reading') return `<article class="type-specimen" style="--reading-face:${readerFonts()};--reader-size:${fontSize}px;--reader-leading:${leading}"><small>排版预览</small><p>清晨的湖面映着树影。<br>沿着岸边，再读一页。</p><p lang="en">Morning light on the water.</p></article>
-    ${group('正文',fontControls(true))}${group('',settingRow('自定义字体','OTF、TTF、WOFF2',button('custom-font','导入字体')))}`;
+    ${group('正文',fontControls())}${group('',settingRow(sampleFontImported?'Sora':'自定义字体','OTF、TTF、WOFF2',button('custom-font',sampleFontImported?'更换字体':'导入字体')))}`;
   if (settingTab==='language') return group('显示语言',settingRow('界面语言','',fieldMenu('locale','界面语言','简体中文'))+settingRow('自定义语言包','',button('language-pack','导入语言包')));
   if (settingTab==='storage') return group('此设备',settingRow('书库位置','~/Documents/hearthread · 示例路径',button('library-location','更改位置')))+group('备份与恢复',settingRow('导出完整书库','原始文件与阅读记录',button('export-library','导出备份'))+settingRow('从备份恢复','',button('restore-library','选择备份')));
   if (settingTab==='shortcuts') {
@@ -1956,7 +2019,7 @@ function states(){return shell(`${header('状态设计','让等待、出错和�
 function surfaceMarkup(name){rawSurface=true;try{return name==='settings'?settings():states()}finally{rawSurface=false}}
 function renderCore(){const focused=document.activeElement;const focusKey=focused?.id?{id:focused.id}:focused?.dataset.action?{action:focused.dataset.action}:focused?.dataset.setting?{setting:focused.dataset.setting}:focused?.dataset.theme?{theme:focused.dataset.theme}:focused?.dataset.paper?{paper:focused.dataset.paper}:focused?.dataset.bookMenu?{bookMenu:focused.dataset.bookMenu}:focused?.dataset.filter?{filter:focused.dataset.filter}:focused?.hasAttribute('data-folder-scope')?{folderScope:focused.dataset.folderScope}:null;
  const layerBefore=document.querySelector('.layer-scroll');const y=layerBefore?.scrollTop||0;
- document.body.className=shellTheme==='light'?'':`theme-${shellTheme}`;
+ const theme=shellTheme==='system'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):shellTheme;document.body.className=theme==='light'?'':`theme-${theme}`;
  document.body.classList.toggle('has-library-layer',!!(readingOpen||libraryPanel));
  if(readingOpen&&document.querySelector('#app .studio'))document.querySelector('#app .studio').inert=true;else if(!layerBefore || !(readingOpen||libraryPanel))document.querySelector('#app').innerHTML=library();if(mobileNav){document.querySelector('.studio-workspace').inert=true;document.querySelector('.studio-nav').setAttribute('role','dialog');document.querySelector('.studio-nav').setAttribute('aria-modal','true');}
  document.querySelector('#library-layer').innerHTML=readingOpen?`<section class="reading-layer layer-scroll" role="dialog" aria-modal="true" aria-label="阅读书籍" tabindex="-1">${reader()}</section>`:libraryPanel?`<div class="library-scrim" data-action="close-library-panel"></div><section class="library-drawer layer-scroll" role="dialog" aria-modal="true" aria-label="${libraryPanel==='settings'?'设置':'状态示例'}" tabindex="-1"><div class="sheet-grab" aria-hidden="true"><i></i></div><button type="button" class="icon-button drawer-close" data-action="close-library-panel" aria-label="关闭面板">${icon('close')}</button>${surfaceMarkup(libraryPanel)}</section>`:'';
@@ -2188,7 +2251,7 @@ const actions={
 'new-folder':newFolderDialog,
 'confirm-folder':()=>{const name=document.querySelector('#folder-name').value.trim();if(!name||folders.includes(name)){toast(name?'这个分类名称已存在':'请输入分类名称');return}folders.push(name);folder=name;folderFilter=name;filter='all';closeModal();render();toast('分类已创建 / 仅本次预览')},
 'toc':()=>{readerPanel=readerPanel==='toc'?'':'toc';render()},'typography':()=>{readerPanel=readerPanel==='type'?'':'type';render()},'reader-search':()=>{readerPanel='search';render();document.querySelector('#book-query')?.focus()},'panel-close':()=>{readerPanel='';render()},'paper-toggle':()=>{paper=paper==='dark'?'light':'dark';render()},'focus':()=>{focusMode=!focusMode;readerPanel='';render()},'prev':()=>{if(route==='pdf'){info('PDF 设计样张','当前仅展示第 3 页的排版示意，正式版会支持真实页面导航。');return}if(route==='markdown'){document.querySelector('.reading-layer').scrollBy({top:-innerHeight*.8,behavior:'auto'});return}chapter=Math.max(1,chapter-1);render();document.querySelector('.reading-layer')?.scrollTo(0,0)},'next':()=>{if(route==='pdf'){info('PDF 设计样张','当前仅展示第 3 页的排版示意，正式版会支持真实页面导航。');return}if(route==='markdown'){document.querySelector('.reading-layer').scrollBy({top:innerHeight*.8,behavior:'auto'});return}chapter=Math.min(4,chapter+1);render();document.querySelector('.reading-layer')?.scrollTo(0,0)},'reset-type':()=>{fontSize=20;leading=1.95;paper='light';render()},'scroll-mode':()=>toast('连续滚动 / 当前预览方式'),'page-mode':()=>info('分页阅读','正式版会支持分页与连续滚动，并在切换后保持文字位置。设计稿暂以章节切换预览阅读节奏。'),'pdf-scale':()=>info('PDF 页面显示','正式版提供适合宽度、适合页面、缩放与旋转；此处展示原始页面布局。'),'clear-search':()=>{query='';render();document.querySelector('#global-query')?.focus()},
-'clear-history':()=>info('清空阅读历史','正式版可清除访问历史，同时保留每本书的阅读进度。设计稿保留样例供评审。'),'custom-theme':()=>info('添加自定义主题','主题文件将包含界面、阅读页、文字和强调色。导入时检查颜色对比度，预览后再应用。'),'custom-font':()=>info('导入字体','正式版支持 OTF、TTF、WOFF2；字体保存在书库扩展目录，并检查可用字重与字符覆盖。'),'language-pack':()=>info('导入语言包','使用带版本号与语言代码的翻译文件；缺失条目回退到内置语言。'),'system-theme':e=>{const on=e.getAttribute('aria-checked')!=='true';followSystem=on;e.setAttribute('aria-checked',on);if(on){shellTheme=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.body.className=shellTheme==='light'?'':`theme-${shellTheme}`;document.body.classList.toggle('has-library-layer',!!(readingOpen||libraryPanel))}toast(on?'已匹配当前系统外观 / 仅本次预览':'已关闭跟随系统')},'library-location':()=>info('更改书库位置','正式版会先检查可用空间，再复制、校验并切换到新位置。成功前保留原书库。'),'export-library':()=>info('导出完整书库','备份将包含书籍、文件夹、阅读位置、个人设置与自定义资源。正式版会在写入完成后校验备份。'),'restore-library':()=>info('从备份恢复','正式版先验证备份版本与内容，再在独立目录中恢复，不直接覆盖当前书库。'),'check-update':()=>info('当前是设计预览','尚未构建可更新的应用。正式版在 macOS、Windows 使用签名更新，iOS、Android 打开对应应用商店。'),'licenses':()=>info('开源与字体','计划使用 Tauri、React、foliate-js、PDF.js、react-markdown 与 Lucide。界面采用 Epilogue，封面与中文阅读采用 Noto Serif SC，中文阅读采用 Noto Serif SC 子集。正式版随包提供各项许可。'),'retry-save':()=>toast('保存恢复状态示例 / 未执行磁盘写入')};
+'clear-history':()=>info('清空阅读历史','正式版可清除访问历史，同时保留每本书的阅读进度。设计稿保留样例供评审。'),'custom-font':()=>info('导入字体','正式版支持 OTF、TTF、WOFF2；字体保存在书库扩展目录，并检查可用字重与字符覆盖。'),'language-pack':()=>info('导入语言包','使用带版本号与语言代码的翻译文件；缺失条目回退到内置语言。'),'library-location':()=>info('更改书库位置','正式版会先检查可用空间，再复制、校验并切换到新位置。成功前保留原书库。'),'export-library':()=>info('导出完整书库','备份将包含书籍、文件夹、阅读位置、个人设置与自定义资源。正式版会在写入完成后校验备份。'),'restore-library':()=>info('从备份恢复','正式版先验证备份版本与内容，再在独立目录中恢复，不直接覆盖当前书库。'),'check-update':()=>info('当前是设计预览','尚未构建可更新的应用。正式版在 macOS、Windows 使用签名更新，iOS、Android 打开对应应用商店。'),'licenses':()=>info('开源与字体','计划使用 Tauri、React、foliate-js、PDF.js、react-markdown 与 Lucide。界面采用 Epilogue，封面与中文阅读采用 Noto Serif SC，中文阅读采用 Noto Serif SC 子集。正式版随包提供各项许可。'),'retry-save':()=>toast('保存恢复状态示例 / 未执行磁盘写入')};
 Object.assign(actions,{
  'toggle-nav':()=>{if(drawerViewport.matches){mobileNav=!mobileNav}else{navCompact=!navCompact}render();document.querySelector(mobileNav?'.studio-nav button':'[data-action=toggle-nav]')?.focus()},
 
@@ -2199,7 +2262,7 @@ Object.assign(actions,{
  'library-settings':()=>openPanel('settings'),'library-states':()=>openPanel('states'),
  'close-library-panel':closeLibraryLayer
 });
-document.addEventListener('click',e=>{const el=e.target.closest('button,a,input,[data-action]');if(e.target.classList.contains('modal-backdrop')){closeModal();return}if(!e.target.closest('.menu,[data-library-menu],[data-book-menu]'))closePopup();if(!el)return;if(el.disabled)return;if(el.dataset.route){e.preventDefault();navigate(el.dataset.route);return}if(el.hasAttribute('data-folder-scope')){folderFilter=el.dataset.folderScope;filter='all';mobileNav=false;selected.clear();render();return}if(el.dataset.folder){folder=el.dataset.folder;navigate('folder');return}if(el.dataset.focusBook){if(e.detail>1)openBook(el.dataset.focusBook);else selectBook(el.dataset.focusBook);return}if(el.dataset.open){openBook(el.dataset.open);return}if(el.dataset.libraryMenu){showLibraryMenu(el);return}if(el.dataset.bookMenu){bookMenu(Number(el.dataset.bookMenu),el);return}if(el.dataset.filter){filter=el.dataset.filter;folderFilter='';mobileNav=false;render();return}if(el.dataset.select){const id=Number(el.dataset.select);el.checked?selected.add(id):selected.delete(id);render();document.querySelector('[data-select="'+id+'"]')?.focus({preventScroll:true});return}if(el.dataset.setting){selectPreference(el.dataset.setting);return}if(el.dataset.theme){followSystem=false;shellTheme=el.dataset.theme;render();return}if(el.dataset.paper){applyReadingPaper(el.dataset.paper);return}if(el.dataset.chapter){chapter=Number(el.dataset.chapter);readerPanel='';render();document.querySelector('.reading-layer')?.scrollTo(0,0);return}if(el.dataset.shortcut){info('自定义快捷键',`正式版可录入「${esc(el.dataset.shortcut)}」的新组合，并提示系统快捷键冲突。`);return}if(el.dataset.action){const action=el.dataset.action;if(action.startsWith('book-'))closePopup(true);actions[action]?.(el)}});
+document.addEventListener('click',e=>{const el=e.target.closest('button,a,input,[data-action]');if(e.target.classList.contains('modal-backdrop')){closeModal();return}if(!e.target.closest('.menu,[data-library-menu],[data-book-menu]'))closePopup();if(!el)return;if(el.disabled)return;if(el.dataset.route){e.preventDefault();navigate(el.dataset.route);return}if(el.hasAttribute('data-folder-scope')){folderFilter=el.dataset.folderScope;filter='all';mobileNav=false;selected.clear();render();return}if(el.dataset.folder){folder=el.dataset.folder;navigate('folder');return}if(el.dataset.focusBook){if(e.detail>1)openBook(el.dataset.focusBook);else selectBook(el.dataset.focusBook);return}if(el.dataset.open){openBook(el.dataset.open);return}if(el.dataset.libraryMenu){showLibraryMenu(el);return}if(el.dataset.bookMenu){bookMenu(Number(el.dataset.bookMenu),el);return}if(el.dataset.filter){filter=el.dataset.filter;folderFilter='';mobileNav=false;render();return}if(el.dataset.select){const id=Number(el.dataset.select);el.checked?selected.add(id):selected.delete(id);render();document.querySelector('[data-select="'+id+'"]')?.focus({preventScroll:true});return}if(el.dataset.setting){selectPreference(el.dataset.setting);return}if(el.dataset.theme){shellTheme=el.dataset.theme;render();return}if(el.dataset.paper){applyReadingPaper(el.dataset.paper);return}if(el.dataset.chapter){chapter=Number(el.dataset.chapter);readerPanel='';render();document.querySelector('.reading-layer')?.scrollTo(0,0);return}if(el.dataset.shortcut){info('自定义快捷键',`正式版可录入「${esc(el.dataset.shortcut)}」的新组合，并提示系统快捷键冲突。`);return}if(el.dataset.action){const action=el.dataset.action;if(action.startsWith('book-'))closePopup(true);actions[action]?.(el)}});
 document.addEventListener('input',e=>{const el=e.target;if(el.id==='global-query'){if(e.isComposing)return;refreshLibrarySearch(el.value)}if(el.id==='book-query'){passageQuery=el.value;document.querySelector('#book-results').innerHTML=documentResults(passageQuery)};if(el.id==='font-size'){fontSize=Number(el.value);document.querySelector('.reader').style.setProperty('--reader-size',fontSize+'px');document.querySelector('#font-value').textContent=fontSize+' px'}if(el.id==='line-height'){leading=Number(el.value);document.querySelector('.reader').style.setProperty('--reader-leading',leading);document.querySelector('#line-value').textContent=leading.toFixed(2)}});
 document.addEventListener('compositionend',e=>{if(e.target.id==='global-query')e.target.dispatchEvent(new Event('input',{bubbles:true}))});
 document.addEventListener('change',e=>{const el=e.target;if(el.id==='shelf-filter'){filter=el.value;selected.clear();render()}if(el.id==='collection-folder'){if(el.value==='__new_category__'){el.value=folderFilter;actions['new-folder']()}else{folderFilter=el.value;filter='all';selected.clear();render()}}if(el.id==='sort'){sort=el.value;render()}if(el.id==='chapter-progress'){goToChapter(Number(el.value))}if(el.id==='reader-font')document.querySelector('.reading-content').style.fontFamily=el.value==='serif'?'var(--serif)':'var(--font)';if(el.id==='default-font-size'){fontSize=Number(el.value);toast('已调整默认字号 / 仅本次预览')}if(el.id==='settings-font')document.querySelector('.font-preview').style.fontFamily=el.value==='系统黑体'?'var(--font)':'var(--serif)';if(el.id==='locale')info('界面语言预览','完整翻译会在正式应用中提供。当前设计稿以简体中文为评审基准；语言切换不改变书籍原文。')});
@@ -2226,8 +2289,7 @@ function sheetExtent(panel) {
 function paintSheet(panel) {
   const distance = sheetMotion.position;
   panel.style.transform = compactSheet() ? `translateY(${distance}px)` : `translateX(${distance}px)`;
-  const scrim = document.querySelector('.library-scrim');
-  if (scrim) scrim.style.opacity = Math.min(1, Math.max(0, 1 - distance / sheetExtent(panel)));
+  document.documentElement.style.setProperty('--sheet-opacity', String(Math.min(1, Math.max(0, 1 - distance / sheetExtent(panel)))));
 }
 function settleSheet(target) {
   const state = sheetMotion;
@@ -2314,16 +2376,16 @@ document.addEventListener('pointerup', releaseSheet);
 document.addEventListener('pointercancel', releaseSheet);
 
 Object.assign(actions,{
+  'custom-font':()=>{sampleFontImported=true;readingFont='Sora';render();toast('设计预览已应用示例字体 Sora')},
   'show-reading-tools':()=>{setReadingTools(true);document.querySelector('.room-back').focus({preventScroll:true})},
   toc:()=>toggleReadingPanel('toc'),typography:()=>toggleReadingPanel('type'),
   'reader-search':()=>toggleReadingPanel('search'),'panel-close':()=>toggleReadingPanel(''),
-  'reset-type':()=>{fontSize=20;leading=1.95;chineseFace=latinFace='serif';paper='light';render()},
-  'system-theme':()=>{followSystem=!followSystem;if(followSystem)shellTheme=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';render()},
+  'reset-type':()=>{fontSize=20;leading=1.95;fontCategory='serif';readingFont='default';paper='light';render()},
   'pdf-scale':()=>{pdfWide=!pdfWide;render()},
   'prev':()=>{turnReadingPage(-1)},
   'next':()=>{turnReadingPage(1)}
 });
-matchMedia('(prefers-color-scheme:dark)').addEventListener('change',event=>{if(followSystem){shellTheme=event.matches?'dark':'light';render()}});
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(shellTheme==='system')render();else if(paper==='system' && readingOpen){document.querySelector('.reading-room').dataset.paper=resolvedPaper();syncBrowserChrome()}});
 function turnReadingPage(direction){
   if(route==='reader') goToChapter(chapter+direction);
   if(route==='markdown') document.querySelector('.reading-layer').scrollBy(0,direction*(innerHeight-140));
