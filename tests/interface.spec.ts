@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./chinese-library";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";

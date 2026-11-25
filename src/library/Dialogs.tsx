@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+import { collectionName } from "./labels";
 import { useRef, useState } from "react";
 import type { Action } from "./Shelf";
 import type { Book, Catalog } from "../model";
@@ -36,12 +38,12 @@ export function LibraryDialog({
   const input = useRef<HTMLInputElement>(null);
   const ready = queue.filter((file) => format(file.name) && file.size);
   const title = {
-    import: "导入书籍",
-    rename: "重命名书籍",
-    move: "移动到分类",
-    delete: "删除藏书",
-    folder: "新建分类",
-    export: "导出书籍",
+    import: t("library.import"),
+    rename: t("dialog.rename"),
+    move: t("dialog.move"),
+    delete: t("dialog.delete"),
+    folder: t("dialog.folder"),
+    export: t("dialog.export"),
   }[kind];
   function stage(files: FileList | null) {
     if (files)
@@ -68,28 +70,27 @@ export function LibraryDialog({
         const n = await importBooks(ready, target);
         afterImport(target);
         notify(
-          "已导入 " +
-            n +
-            " 本书" +
-            (n < ready.length ? "，已跳过重复文件" : ""),
+          t("notice.imported", { count: n }) +
+            (n < ready.length ? t("import.duplicate") : ""),
         );
       }
       if (kind === "folder") {
-        if (!name.trim()) throw new Error("请输入分类名称");
+        if (!name.trim()) throw new Error(t("error.folderName"));
         await update((s) => {
-          if (s.folders.includes(name.trim())) throw new Error("分类已存在");
+          if (s.folders.includes(name.trim()))
+            throw new Error(t("error.folderExists"));
           return { folders: [...s.folders, name.trim()] };
         });
-        notify("已创建分类");
+        notify(t("notice.folderCreated"));
       }
       if (kind === "move") await patchBooks(ids, { folder: target });
       if (kind === "rename") {
-        if (!name.trim()) throw new Error("请输入书名");
+        if (!name.trim()) throw new Error(t("error.bookTitle"));
         await patchBooks(ids, { title: name.trim() });
       }
       if (kind === "delete") {
         await patchBooks(ids, { deleted: true });
-        notify("已删除 " + ids.length + " 本书", () =>
+        notify(t("notice.deleted", { count: ids.length }), () =>
           patchBooks(ids, { deleted: false }),
         );
       }
@@ -101,22 +102,28 @@ export function LibraryDialog({
     }
   }
   const confirmLabel = {
-    import: ready.length ? "导入 " + ready.length + " 本" : "导入书籍",
-    folder: "创建",
-    move: "移动",
-    rename: "保存",
-    delete: "删除 " + books.length + " 本书",
-    export: "导出",
+    import: ready.length
+      ? t("import.confirm", { count: ready.length })
+      : t("library.import"),
+    folder: t("action.create"),
+    move: t("action.move"),
+    rename: t("action.save"),
+    delete: t("delete.confirm", { count: books.length }),
+    export: t("action.export"),
   }[kind];
   const destination = (
     <div className="destination">
       <Icon name="folder" />
-      <span>{kind === "import" ? "导入到分类" : "目标分类"}</span>
+      <span>
+        {kind === "import" ? t("import.collection") : t("dialog.destination")}
+      </span>
       <Select
-        label="目标分类"
+        label={t("dialog.destination")}
         value={target}
         change={setTarget}
-        options={Object.fromEntries(data.folders.map((f) => [f, f]))}
+        options={Object.fromEntries(
+          data.folders.map((f) => [f, collectionName(f)]),
+        )}
       />
     </div>
   );
@@ -129,7 +136,7 @@ export function LibraryDialog({
       footer={
         <>
           <Button disabled={busy} onClick={close}>
-            取消
+            {t("action.cancel")}
           </Button>
           <Button
             variant={kind === "delete" ? "destructive" : "primary"}
@@ -140,7 +147,7 @@ export function LibraryDialog({
             }
             onClick={confirm}
           >
-            {busy ? "正在保存…" : confirmLabel}
+            {busy ? t("action.saving") : confirmLabel}
           </Button>
         </>
       }
@@ -178,27 +185,29 @@ export function LibraryDialog({
             <span className="drop-symbol">
               <Icon name="importBook" />
             </span>
-            <strong>选择书籍文件</strong>
-            <span>或拖放至此 · EPUB、PDF、Markdown</span>
+            <strong>{t("import.choose")}</strong>
+            <span>{t("import.drop")}</span>
           </button>
           {queue.length > 0 && (
             <div className="file-review">
               <p className="queue-status" role="status">
-                待导入 {ready.length} 本
+                {t("import.ready", { count: ready.length })}
                 {queue.length > ready.length
-                  ? " · 将跳过 " + (queue.length - ready.length) + " 项"
+                  ? t("import.skipped", { count: queue.length - ready.length })
                   : ""}
               </p>
-              <ul aria-label="所选文件">
+              <ul aria-label={t("import.files")}>
                 {queue.map((f, i) => (
                   <li key={i}>
                     <Icon name="file" />
                     <span className="file-name">{f.name}</span>
                     <small>
-                      {!f.size ? "空文件" : (format(f.name) ?? "格式不支持")}
+                      {!f.size
+                        ? t("import.empty")
+                        : (format(f.name) ?? t("import.unsupported"))}
                     </small>
                     <Tool
-                      label={"移除 " + f.name}
+                      label={t("import.remove", { name: f.name })}
                       symbol="close"
                       onClick={() =>
                         setQueue((q) => q.filter((_, n) => n !== i))
@@ -210,14 +219,14 @@ export function LibraryDialog({
             </div>
           )}
           {destination}
-          <small className="preview-note">
-            原文件保存在本地书库。相同内容只保存一份。
-          </small>
+          <small className="preview-note">{t("import.local")}</small>
         </div>
       ) : kind === "rename" || kind === "folder" ? (
         <>
           <label className="dialog-field">
-            {kind === "rename" ? "书籍名称" : "分类名称"}
+            {kind === "rename"
+              ? t("dialog.bookName")
+              : t("dialog.collectionName")}
             <input
               className="field-input"
               autoFocus
@@ -232,12 +241,12 @@ export function LibraryDialog({
             />
           </label>
           {kind === "rename" && (
-            <p className="dialog-note">仅更改书库中的显示名称。</p>
+            <p className="dialog-note">{t("dialog.renameHint")}</p>
           )}
         </>
       ) : (
         <>
-          <ul className="dialog-books" aria-label="所选藏书">
+          <ul className="dialog-books" aria-label={t("dialog.selected")}>
             {books.map((b) => (
               <li key={b.id}>
                 <Icon name="book" />
@@ -249,9 +258,7 @@ export function LibraryDialog({
           {kind === "move" ? (
             destination
           ) : (
-            <p className="dialog-note">
-              从书库移除后，可在提示中点「撤销」恢复。
-            </p>
+            <p className="dialog-note">{t("dialog.undoHint")}</p>
           )}
         </>
       )}

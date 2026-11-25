@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { HardDrive } from "lucide-react";
 import type { Book } from "../model";
@@ -22,7 +23,11 @@ export default function StorageDetails({
         <BarChart data={data}>
           <XAxis dataKey="format" />
           <YAxis allowDecimals={false} />
-          <Bar dataKey="count" name="书籍数量" fill="var(--brand-thread)" />
+          <Bar
+            dataKey="count"
+            name={t("storage.bookCount")}
+            fill="var(--brand-thread)"
+          />
         </BarChart>
       </ResponsiveContainer>
     </>

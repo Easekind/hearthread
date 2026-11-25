@@ -10,7 +10,7 @@ function matchesBook(book, queryText) {
 
 function fieldOptions(id) {
   if (id==='preference-section') return Object.entries(settingNames);
-  if (id==='locale') return ['简体中文','繁體中文','English'].map(name=>[name,name]);
+  if (id==='locale') return ['English','简体中文'].map(name=>[name,name]);
   if (id==='import-folder' || id==='move-folder') return folders.map(name=>[name,name]);
   if (id==='reading-font') return [['default','系统默认'], ...Object.entries(readingFonts[fontCategory].fonts).filter(([name])=>hasSystemFont(name)), ...(sampleFontImported?[['Sora','Sora（已导入）']]:[])];
   return [['serif','衬线'],['sans','无衬线']];

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { create } from "fontkitten";
 import { files } from "../storage/files";
 
@@ -8,7 +9,7 @@ export async function customFontName(key: string) {
   const source = await files.url(key);
   try {
     const response = await fetch(source.url);
-    if (!response.ok) throw new Error("无法读取字体");
+    if (!response.ok) throw new Error(t("error.fontRead"));
     const bytes = new Uint8Array(await response.arrayBuffer());
     // Fontkitten accepts Uint8Array in browsers, but its declaration uses Node's Buffer.
     const font = create(bytes as Buffer);

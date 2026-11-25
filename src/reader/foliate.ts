@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 interface Toc {
   label: string;
   href: string;
@@ -50,11 +51,11 @@ export interface EpubView extends HTMLElement {
 const modulePath = new URL("/foliate/view.js", location.href).href;
 export async function openEpub(file: File): Promise<Epub> {
   const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
-  if (head[0] !== 80 || head[1] !== 75) throw new Error("无法识别 EPUB 文件");
+  if (head[0] !== 80 || head[1] !== 75) throw new Error(t("error.invalidEpub"));
   const { makeBook } = await import(/* @vite-ignore */ modulePath);
   const book: Epub = await makeBook(file);
   if (!book.sections?.length || !book.transformTarget)
-    throw new Error("EPUB 缺少可阅读章节");
+    throw new Error(t("error.noChapters"));
   book.transformTarget.addEventListener("load", (e) => {
     const detail = (e as CustomEvent).detail;
     if (detail.isScript) detail.allow = false;

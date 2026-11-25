@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef } from "react";
 import { readingFontFamily } from "./typography";
 import { openExternal } from "./links";
@@ -78,7 +79,7 @@ export default function Epub(props: EngineProps) {
     view.current = node;
     async function start() {
       const response = await fetch(props.source, { signal: controller.signal });
-      if (!response.ok) throw new Error("读取 EPUB 失败");
+      if (!response.ok) throw new Error(t("error.epubRead"));
       const book = await openEpub(
         new File([await response.blob()], props.book.filename),
       );
@@ -157,7 +158,7 @@ export default function Epub(props: EngineProps) {
           index = p.section?.current ?? 0;
         latest.current.position({
           location: p.cfi,
-          chapter: p.tocItem?.label ?? "第 " + (index + 1) + " 章",
+          chapter: p.tocItem?.label ?? "",
           progress: Math.round((p.fraction || 0) * 100),
           index,
         });
@@ -177,7 +178,7 @@ export default function Epub(props: EngineProps) {
       if (!live) return;
       const sections = book.sections.map((_, i) => ({
         target: i,
-        label: "第 " + (i + 1) + " 章",
+        label: t("reader.chapter", { number: i + 1 }),
       }));
       const toc = flattenToc(book.toc ?? []).map((t) => ({
         target: t.href,

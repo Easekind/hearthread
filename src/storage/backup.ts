@@ -1,3 +1,4 @@
+import { t, locales } from "../i18n";
 import { zipSync, unzipSync, strToU8, strFromU8 } from "fflate";
 import { z } from "zod";
 import { files } from "./files";
@@ -20,6 +21,7 @@ const book = z
     style: text,
     progress: numeric.min(0).max(100),
     chapter: text,
+    sectionIndex: z.number().int().nonnegative().optional(),
     size: text,
     pinned: z.boolean(),
     readAt: numeric,
@@ -47,6 +49,7 @@ const schema = z.object({
   folders: z.array(text).min(1),
   prefs: z
     .object({
+      locale: z.enum(locales).default(defaults.locale),
       theme: z.enum(themeOptions),
       paper: z.enum(themeOptions),
       size: numeric.min(typeLimits.size.min).max(typeLimits.size.max),
@@ -81,7 +84,7 @@ export async function backup() {
     const object = await files.url(key);
     try {
       const res = await fetch(object.url);
-      if (!res.ok) throw new Error("无法读取备份文件");
+      if (!res.ok) throw new Error(t("error.backupRead"));
       entries["objects/" + key] = new Uint8Array(await res.arrayBuffer());
     } finally {
       object.release();
@@ -97,12 +100,12 @@ export async function restore(file: File) {
     filter: (f) =>
       f.name === "catalog.json" || /^objects\/[a-f0-9]{64}$/.test(f.name),
   });
-  if (!entries["catalog.json"]) throw new Error("找不到书库清单");
+  if (!entries["catalog.json"]) throw new Error(t("error.manifest"));
   const snapshot = schema.parse(JSON.parse(strFromU8(entries["catalog.json"])));
   for (const key of keys(snapshot)) {
     const bytes = entries["objects/" + key];
     if (!bytes || (await files.put(new Blob([new Uint8Array(bytes)]))) !== key)
-      throw new Error("备份文件校验失败");
+      throw new Error(t("error.verify"));
   }
   await update((s) => {
     const merged = new Map(s.books.map((b) => [b.id, b]));

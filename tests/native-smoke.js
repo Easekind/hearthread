@@ -48,7 +48,32 @@
     await until(() => query(".book-wall"), "library");
     const initial = await ipc("catalog");
     await note("catalog " + initial.length);
-    await click('button[title="设置"]');
+    if (!initial.length) {
+      if (document.documentElement.lang !== "en")
+        throw Error("Expected English on first launch");
+      await click('button[title="Settings"]');
+      (await until(() => button("Language"), "language settings")).click();
+      const localeMenu = await until(
+        () => query('button[aria-label="Interface language, English"]'),
+        "interface language",
+      );
+      localeMenu.focus();
+      localeMenu.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      (await until(() => button("简体中文"), "Chinese option")).click();
+      await until(
+        () => document.documentElement.lang === "zh-CN",
+        "apply Chinese",
+      );
+    } else {
+      await click('button[title="设置"]');
+      log.push("interface language survived SQLite reload");
+    }
     (await until(() => button("阅读排版"), "reading preferences")).click();
     if (!initial.length) {
       const fontInput = await until(

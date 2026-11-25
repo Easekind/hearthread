@@ -144,7 +144,7 @@ const segmenterSearch = function* (strs, query, options = {}) {
     }
 }
 
-// Calibre-parity regex mode (#4560). Runs a JS RegExp over the joined text and
+// Regex search mode (#4560). Runs a JS RegExp over the joined text and
 // maps each match back to a node range. Note: RegExp.exec is synchronous, so a
 // catastrophic pattern can still stall this pass — true interruption (a Web
 // Worker) is left to a follow-up; here we only cap match count and reject
@@ -208,7 +208,7 @@ const makeNearbyExcerpt = (haystack, matched) => {
     return { pre, match, post, segments }
 }
 
-// Calibre-parity nearby-words mode (#4560): matches places where all of the
+// Nearby-words search mode (#4560): matches places where all of the
 // query's distinct whole words occur within `nearbyWords` words of each other.
 // Distance is measured in words (not characters) and comes from the option, not
 // from the query string, so trailing numbers stay literal search words.

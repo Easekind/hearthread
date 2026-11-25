@@ -1,15 +1,17 @@
+import { t } from "../i18n";
 import { isTauri } from "@tauri-apps/api/core";
 import { files } from "./files";
-import { original, update } from "./catalog";
+import { catalog, original, update } from "./catalog";
 import type { Book, Format } from "../model";
 function localizedText(value: unknown): string {
   if (typeof value === "string") return value;
   if (!value || typeof value !== "object") return "";
+  const locale = catalog.get().prefs.locale;
   const labels = value as Record<string, unknown>;
   return (
     [
-      labels[navigator.language],
-      labels.zh,
+      labels[locale],
+      labels[locale.split("-")[0]],
       labels.en,
       ...Object.values(labels),
     ].find((v): v is string => typeof v === "string") ?? ""
@@ -25,7 +27,7 @@ export async function importBooks(pending: File[], folder: string) {
   const entries: Book[] = [];
   for (const file of pending) {
     const type = format(file.name);
-    if (!type || !file.size) throw new Error("无法导入空文件或不支持的格式");
+    if (!type || !file.size) throw new Error(t("error.importFormat"));
     let title = file.name.replace(/\.[^.]+$/, ""),
       author = "",
       cover: string | undefined;
@@ -38,7 +40,7 @@ export async function importBooks(pending: File[], folder: string) {
           .flat()
           .map((a) => (typeof a === "string" ? a : localizedText(a.name)))
           .filter(Boolean)
-          .join("、");
+          .join(catalog.get().prefs.locale === "en" ? ", " : "、");
         const image = await book.getCover?.();
         if (
           image &&
@@ -53,7 +55,7 @@ export async function importBooks(pending: File[], folder: string) {
     } else if (type === "PDF") {
       const signature = await file.slice(0, 1024).text();
       if (!signature.includes("%PDF-"))
-        throw new Error(file.name + " 缺少 PDF 文件头");
+        throw new Error(t("error.pdfHeader", { name: file.name }));
     }
     const key = await files.put(file);
     entries.push({
@@ -70,7 +72,7 @@ export async function importBooks(pending: File[], folder: string) {
       readAt: 0,
       added: Date.now(),
       progress: 0,
-      chapter: "尚未开始",
+      chapter: "",
       size:
         file.size >= 1048576
           ? (file.size / 1048576).toFixed(1) + " MB"

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useRef, useState } from "react";
 import Markdown, { defaultUrlTransform } from "react-markdown";
 import { openExternal } from "./links";
@@ -35,7 +36,7 @@ export default function TextDocument(props: EngineProps) {
     const abort = new AbortController();
     fetch(props.source, { signal: abort.signal })
       .then((r) => {
-        if (!r.ok) throw new Error("无法读取 Markdown");
+        if (!r.ok) throw new Error(t("error.markdownRead"));
         return r.text();
       })
       .then(setDocument)
@@ -143,7 +144,9 @@ export default function TextDocument(props: EngineProps) {
     return (
       <div ref={root}>
         <article className="reading-content">
-          <div className="chapter-kicker">{"第 " + (chapter + 1) + " 章"}</div>
+          <div className="chapter-kicker">
+            {t("reader.chapter", { number: chapter + 1 })}
+          </div>
           <h1>{c.title}</h1>
           {c.paragraphs.map((p, i) => (
             <p key={i} className={!i ? "opening" : ""}>
@@ -151,7 +154,7 @@ export default function TextDocument(props: EngineProps) {
             </p>
           ))}
           <div className="chapter-end">
-            本页为原创排版样文，非《{props.book.title}》原文
+            {t("reader.specimen", { title: props.book.title })}
           </div>
         </article>
       </div>

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./chinese-library";
 import { basename } from "node:path";
 import fs from "node:fs/promises";
 import { createHash } from "node:crypto";

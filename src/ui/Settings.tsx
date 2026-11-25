@@ -1,3 +1,4 @@
+import { t, type MessageKey, languageNames, isLocale } from "../i18n";
 import {
   lazy,
   Suspense,
@@ -29,14 +30,6 @@ import { useCustomFontName } from "./useCustomFontName";
 import { useSheet } from "./useSheet";
 import type { Notify } from "../library/Dialogs";
 const StorageDetails = lazy(() => import("./StorageDetails"));
-const names = {
-  appearance: "外观",
-  reading: "阅读排版",
-  language: "语言",
-  storage: "本地存储",
-  shortcuts: "快捷键",
-  about: "关于与更新",
-};
 const symbols = {
   appearance: "sun",
   reading: "book",
@@ -45,7 +38,7 @@ const symbols = {
   shortcuts: "keyboard",
   about: "info",
 };
-type Tab = keyof typeof names;
+type Tab = keyof typeof symbols;
 function Row({
   name,
   detail,
@@ -90,6 +83,14 @@ export function Settings({
   const { drawer, dismiss, handle } = useSheet(close);
   const restore = useRef<HTMLInputElement>(null),
     font = useRef<HTMLInputElement>(null);
+  const names = {
+    appearance: t("settings.appearance"),
+    reading: t("settings.typography"),
+    language: t("settings.language"),
+    storage: t("settings.storage"),
+    shortcuts: t("settings.shortcuts"),
+    about: t("settings.about"),
+  };
   const p = data.prefs,
     mod = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
   const customFontName = useCustomFontName(
@@ -97,7 +98,7 @@ export function Settings({
   );
   useEffect(() => {
     void files.location().then(setPath);
-  }, []);
+  }, [p.locale]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (sub || document.querySelector("[data-radix-popper-content-wrapper]"))
@@ -131,10 +132,10 @@ export function Settings({
       </button>
     );
   }
-  async function transfer(job: () => Promise<unknown>, message: string) {
+  async function transfer(job: () => Promise<unknown>, message: MessageKey) {
     setBusy(true);
     try {
-      if ((await job()) !== false) notify(message);
+      if ((await job()) !== false) notify(t(message));
     } catch (e) {
       notify(String(e));
     } finally {
@@ -150,23 +151,26 @@ export function Settings({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="设置"
+        aria-label={t("settings.title")}
       >
         <div className="sheet-grab" aria-hidden="true" {...handle}>
           <i />
         </div>
         <Tool
           className="icon-button drawer-close"
-          label="关闭面板"
+          label={t("panel.close")}
           symbol="close"
           onClick={dismiss}
         />
         <div className="preferences">
           <header className="preferences-title">
-            <h1>设置</h1>
+            <h1>{t("settings.title")}</h1>
           </header>
           <div className="preferences-grid">
-            <nav className="preferences-nav" aria-label="设置分类">
+            <nav
+              className="preferences-nav"
+              aria-label={t("settings.categories")}
+            >
               {(Object.keys(names) as Tab[]).map((t, i) => (
                 <button
                   key={t}
@@ -194,7 +198,7 @@ export function Settings({
               <h2>{names[tab]}</h2>
               <div className="mobile-preference">
                 <Select
-                  label="设置分类"
+                  label={t("settings.categories")}
                   value={tab}
                   options={names}
                   change={(v) => setTab(v as Tab)}
@@ -205,14 +209,14 @@ export function Settings({
                 <>
                   <div
                     className="appearance-preview"
-                    aria-label="当前主题的书库预览"
+                    aria-label={t("settings.preview")}
                   >
                     <div className="mini-window">
                       <div className="mini-rail">
                         <Icon name="library" />
                       </div>
                       <div className="mini-library">
-                        <strong>我的书库</strong>
+                        <strong>{t("library.heading")}</strong>
                         <div className="mini-shelf">
                           {data.books.slice(0, 3).map((b) => (
                             <div key={b.id}>
@@ -224,7 +228,7 @@ export function Settings({
                     </div>
                   </div>
                   <Papers
-                    label="书库外观"
+                    label={t("settings.theme")}
                     options={themeOptions}
                     value={p.theme}
                     change={(theme) => void patchPrefs({ theme })}
@@ -234,15 +238,15 @@ export function Settings({
               {tab === "reading" && (
                 <>
                   <article className="type-specimen" style={typeStyle(p)}>
-                    <small>排版预览</small>
-                    <p>
+                    <small>{t("settings.typePreview")}</small>
+                    <p lang="zh-CN">
                       清晨的湖面映着树影。
                       <br />
                       沿着岸边，再读一页。
                     </p>
                     <p lang="en">Morning light on the water.</p>
                   </article>
-                  <Group title="正文">
+                  <Group title={t("settings.body")}>
                     <TypeControls
                       prefs={p}
                       customFontName={customFontName}
@@ -251,14 +255,17 @@ export function Settings({
                   </Group>
                   <Group>
                     <Row
-                      name={customFontName || "自定义字体"}
-                      detail="OTF、TTF、WOFF2"
+                      name={customFontName || t("font.custom")}
+                      detail={t("font.formats")}
                     >
-                      {action(p.customFont ? "更换字体" : "导入字体", () => {
-                        if (isTauri())
-                          void transfer(pickNativeFont, "已应用字体");
-                        else font.current?.click();
-                      })}
+                      {action(
+                        p.customFont ? t("font.replace") : t("font.import"),
+                        () => {
+                          if (isTauri())
+                            void transfer(pickNativeFont, "font.applied");
+                          else font.current?.click();
+                        },
+                      )}
                     </Row>
                   </Group>
                   <input
@@ -270,42 +277,57 @@ export function Settings({
                       const file = e.currentTarget.files?.[0];
                       e.currentTarget.value = "";
                       if (file)
-                        void transfer(() => importFontFile(file), "已应用字体");
+                        void transfer(
+                          () => importFontFile(file),
+                          "font.applied",
+                        );
                     }}
                   />
                 </>
               )}
               {tab === "language" && (
-                <Group title="显示语言">
-                  <Row name="界面语言">
-                    <span>简体中文</span>
+                <Group title={t("settings.displayLanguage")}>
+                  <Row name={t("settings.interfaceLanguage")}>
+                    <Select
+                      label={t("settings.interfaceLanguage")}
+                      value={p.locale}
+                      options={languageNames}
+                      change={(value) => {
+                        if (isLocale(value)) void patchPrefs({ locale: value });
+                      }}
+                    />
                   </Row>
                 </Group>
               )}
               {tab === "storage" && (
                 <>
-                  <Group title="此设备">
-                    <Row name="书库位置" detail={path}>
-                      {action("查看位置", () => setSub("本地书库"))}
+                  <Group title={t("settings.device")}>
+                    <Row name={t("storage.location")} detail={path}>
+                      {action(t("storage.view"), () => setSub("storage"))}
                     </Row>
                   </Group>
-                  <Group title="备份与恢复">
-                    <Row name="导出完整书库" detail="原始文件与阅读记录">
+                  <Group title={t("storage.backups")}>
+                    <Row
+                      name={t("storage.exportLibrary")}
+                      detail={t("storage.backupContents")}
+                    >
                       {action(
-                        "导出备份",
+                        t("storage.exportBackup"),
                         () =>
                           void transfer(
                             async () =>
                               (await import("../storage/backup")).backup(),
-                            "书库备份已导出",
+                            "storage.exported",
                           ),
                       )}
                     </Row>
                     <Row
-                      name="从备份恢复"
-                      detail="合并书目，恢复同一本书的阅读记录"
+                      name={t("storage.restore")}
+                      detail={t("storage.restoreDetail")}
                     >
-                      {action("选择备份", () => restore.current?.click())}
+                      {action(t("storage.chooseBackup"), () =>
+                        restore.current?.click(),
+                      )}
                     </Row>
                   </Group>
                   <input
@@ -319,7 +341,7 @@ export function Settings({
                         void transfer(
                           async () =>
                             (await import("../storage/backup")).restore(f),
-                          "书库已恢复",
+                          "storage.restored",
                         );
                       e.target.value = "";
                     }}
@@ -327,13 +349,13 @@ export function Settings({
                 </>
               )}
               {tab === "shortcuts" && (
-                <Group title="键盘操作">
+                <Group title={t("settings.keyboard")}>
                   {[
-                    ["搜索书库", mod + " K"],
-                    ["导入书籍", mod + " O"],
-                    ["书内搜索", mod + " F"],
-                    ["切换章节", "← / →"],
-                    ["关闭面板", "Esc"],
+                    [t("library.search"), mod + " K"],
+                    [t("library.import"), mod + " O"],
+                    [t("reader.find"), mod + " F"],
+                    [t("reader.changeChapter"), "← / →"],
+                    [t("panel.close"), "Esc"],
                   ].map(([name, key]) => (
                     <Row key={name} name={name}>
                       <kbd className="key">{key}</kbd>
@@ -348,12 +370,12 @@ export function Settings({
                       <path d="M5 4 15 10V19L25 13V4L35 10V36L25 30V21L15 27V36L5 30Z" />
                     </svg>
                     <strong>hearthread</strong>
-                    <small>本地阅读器 · v0.1.0</small>
+                    <small>{t("settings.version")}</small>
                   </div>
                   <Group>
-                    <Row name="开源项目与字体">
-                      {action("查看许可", () => {
-                        setSub("开源许可");
+                    <Row name={t("settings.credits")}>
+                      {action(t("settings.viewLicenses"), () => {
+                        setSub("licenses");
                         Promise.all(
                           [
                             "/foliate/LICENSE",
@@ -372,8 +394,13 @@ export function Settings({
         </div>
       </section>
       {sub && (
-        <Modal title={sub} close={() => setSub("")}>
-          {sub === "本地书库" ? (
+        <Modal
+          title={
+            sub === "storage" ? t("storage.local") : t("settings.licenses")
+          }
+          close={() => setSub("")}
+        >
+          {sub === "storage" ? (
             <Suspense>
               <StorageDetails books={data.books} path={path} />
             </Suspense>

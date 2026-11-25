@@ -1,6 +1,12 @@
 # 在 hearthread 仓库中开发
 
-本指南适用于整个仓库。hearthread 是基于 Tauri、React 和 TypeScript 的本地优先个人资料库。当前版本供单个本地读者阅读 EPUB、PDF 和 Markdown。图片管理和多人同步属于后续规划。
+本指南适用于整个仓库，从技术选型、设计、实现到验收和后续维护。hearthread 是一款本地优先的阅读应用。产品取舍以阅读体验为先：打开书、翻页、跳转和续读要流畅易用，界面保持克制，让正文占据主要空间。当前版本供单个读者离线阅读 EPUB、PDF 和 Markdown。可靠的多人数据同步是长期目标，S3 同步和图片管理属于后续规划。
+
+## 平台和技术栈
+
+- Tauri 应用面向较新版本的 macOS、Windows、iOS 和 Android。涉及系统文件、WebView 或输入方式时，同时考虑桌面和移动端。最低系统版本以仓库的平台配置为准。
+- 前端使用 React、TypeScript、Tailwind CSS、shadcn/ui、Recharts 和 Lucide React。原生书库使用 SQLite；需要系统能力或对性能敏感的模块使用 Rust。
+- 选型和升级时核对上游当前维护的版本、发布说明和目标平台支持情况。升级后一起更新依赖清单、锁文件或内置资源的版本记录，保证同一提交可复现。
 
 ## 开发原则
 
@@ -11,7 +17,8 @@
 5. 优先用成熟的、有人维护的第三方库。没有特别硬的理由，别自己重写。
 6. 动手之前，先翻翻项目里已经有的依赖能做什么，再决定要不要加新包或自己写。别想当然地觉得库里肯定没有。
 7. 架构决策要往长远做。不接受“先凑合用，以后再说”这种临时方案。
-8. 先看成熟产品是怎么解决同一个问题的，用已经被验证过的模式，别从零开始发明。
+8. 新增核心功能、更换依赖或处理性能瓶颈前，先查 GitHub 上持续维护、解决同类问题的开源项目，阅读对应实现。把影响决策的上游链接、版本或提交号、复用的做法及取舍记入[架构笔记](docs/architecture.md)。配置方法、依赖资源来源和可复用的工具经验随相关改动纳入版本管理。
+9. 界面、文档和源码注释用 hearthread 自己的功能和行为说明设计。调研同类阅读产品时，记录技术结论，省略竞品名称、比较文案及指向竞品的链接。保留实际使用的依赖名称、许可证和格式兼容所需的标识。
 
 ## 运行项目
 
@@ -19,15 +26,15 @@
 
 ## 修改界面和阅读器
 
-- 修改页面结构或样式前，先更新交互设计稿，再按更新后的设计稿实现页面。
+- 页面布局、字体、颜色、间距和交互状态须与设计稿一致。修复视觉偏差时按现有稿修改应用；产品设计确需变更时，先更新交互稿，再实现并对照桌面与手机尺寸验收。
 - 视觉对照以 `docs/design/v0.1/index.html` 的交互稿为准。书墙在 `src/library/`，通用控件和设置在 `src/ui/`。从设计稿提取的 `public/design/edition.css` 作为静态文件加载。设计源稿变动后，用 `node scripts/design-assets.mjs` 重新提取资源。
 - 修改阅读器先看 `src/reader/Reader.tsx` 和同目录的 `engine.ts`。内置样章有独立的渲染路径。调整分页、搜索或续读时，导入对应格式的文件验证。
-- 遇到 EPUB 排版或性能问题，优先参考工作区同级目录中的优化版 `../foliate-js` 和 `../readest` 的阅读器实现。升级内置 EPUB 引擎时，运行 `node scripts/vendor-epub.mjs ../foliate-js`，检查生成的改动和 `public/foliate/REVISION` 中的提交号。
+- 阅读器功能难以实现、渲染卡顿或出现性能瓶颈时，优先查阅工作区内成熟阅读器对应功能的架构和实现。EPUB 使用同级目录的优化版 `../foliate-js`；升级内置引擎时，运行 `node scripts/vendor-epub.mjs ../foliate-js`，检查生成的改动和 `public/foliate/REVISION` 中的提交号，清理上游注释中的竞品举例和具名工单引用。
 - `src/reader/Pdf.tsx` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。只渲染当前页，换页时取消旧任务。Markdown 使用 `react-markdown`，禁用原始 HTML。
 
 ## 存储和阅读位置
 
-文件和书目操作统一走 `src/storage/files.ts` 中的 `LibraryFiles`。原生适配器调用 `src-tauri/src/store.rs` 中的 Rust 和 SQLite 实现，浏览器使用独立的 IndexedDB 书库。书目记录保存文件的 SHA-256 键。读取结束后，调用读取句柄的 `release()` 释放资源。
+文件和书目操作统一走 `src/storage/files.ts` 中的 `LibraryFiles`。原生应用把原件、资源和 SQLite 数据库保存在本地书库目录，原生适配器调用 `src-tauri/src/store.rs`，浏览器使用独立的 IndexedDB 书库。业务层只持有逻辑记录键和文件的 SHA-256 键，由适配器解析存储位置。读取结束后，调用读取句柄的 `release()` 释放资源。后续接入 S3 时沿用同一接口及其批量提交和冲突语义；当前版本只实现本地读写。
 
 先写入不可变对象，再提交书目。把相关变更连同预期修订号放进同一批次，冲突时整批回滚。共享书目保存在 `books/<id>` 下，阅读位置和偏好保存在 `profiles/local/` 下。重新打开文件时，EPUB 按 CFI 恢复，PDF 按从 1 开始的页码恢复，Markdown 按相对滚动位置恢复。
 
@@ -44,7 +51,9 @@
 
 Playwright 默认使用已安装的 Chrome。使用自带 Chromium 时，先运行 `bunx playwright install chromium`，再设置 `PLAYWRIGHT_CHANNEL=chromium`。可选的个人书库用例通过环境变量读取本地路径。`HEARTHREAD_TEST_EPUB` 对应的书至少需要六个目录项，`HEARTHREAD_TEST_PDF` 对应的文件至少需要十页。个人书籍放在仓库之外。
 
-调整架构、依赖或平台兼容方案时，更新[架构笔记](docs/architecture.md)。更新验收记录时，写明实际验证的平台和操作。[验收记录](docs/verification/README.md)
+交付前从用户入口走完受影响的真实任务。阅读器验收要导入对应格式的实际文件，打开正文、改变阅读位置、退出并重新打开，确认恢复到原处。备份验收要在空书库中恢复并读到原文。界面验收要对照设计稿检查改动涉及的页面和状态，确认无可见偏差。
+
+调整架构、依赖或平台支持范围时，同步更新[架构笔记](docs/architecture.md)。在[验收记录](docs/verification/README.md)中写明实际运行的平台和环境、操作、观察结果，以及尚未验证的平台或任务。手机尺寸浏览器截图只用于布局对照，原生文件选择、触摸和持久化体验需在对应平台验证。
 
 ## 提交 PR
 

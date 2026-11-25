@@ -1,4 +1,10 @@
-import { invoke, isTauri, convertFileSrc } from "@tauri-apps/api/core";
+import { t, nativeError } from "../i18n";
+import {
+  invoke as tauriInvoke,
+  type InvokeArgs,
+  isTauri,
+  convertFileSrc,
+} from "@tauri-apps/api/core";
 export interface Row {
   key: string;
   value: string;
@@ -16,6 +22,17 @@ export interface LibraryFiles {
   put(blob: Blob): Promise<string>;
   url(key: string): Promise<{ url: string; release(): void }>;
   location(): Promise<string>;
+}
+async function invoke<T>(
+  command: string,
+  args?: InvokeArgs,
+  options?: Parameters<typeof tauriInvoke>[2],
+): Promise<T> {
+  try {
+    return await tauriInvoke<T>(command, args, options);
+  } catch (error) {
+    throw nativeError(error);
+  }
 }
 const nativeFiles: LibraryFiles = {
   records: () => invoke("catalog"),
@@ -66,7 +83,7 @@ function complete(tx: IDBTransaction) {
   return new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => resolve();
     tx.onabort = tx.onerror = () =>
-      reject(tx.error ?? new Error("书库已更新，请重新载入后再试"));
+      reject(tx.error ?? new Error(t("error.conflict")));
   });
 }
 const browserFiles: LibraryFiles = {
@@ -110,12 +127,12 @@ const browserFiles: LibraryFiles = {
     const blob = await result<Blob | undefined>(
       (await db()).transaction("objects").objectStore("objects").get(key),
     );
-    if (!blob) throw new Error("找不到书籍原文件");
+    if (!blob) throw new Error(t("error.missingOriginal"));
     const url = URL.createObjectURL(blob);
     return { url, release: () => URL.revokeObjectURL(url) };
   },
   async location() {
-    return "此浏览器的本地书库";
+    return t("storage.browser");
   },
 };
 export const files = isTauri() ? nativeFiles : browserFiles;

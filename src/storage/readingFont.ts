@@ -1,22 +1,22 @@
+import { t } from "../i18n";
 import { patchPrefs } from "./catalog";
 import { files } from "./files";
 
 export const fontExtensions = ["otf", "ttf", "woff2"];
-const formatError = "请选择 OTF、TTF 或 WOFF2 字体文件";
 
 function checkExtension(name: string) {
   if (!fontExtensions.some((ext) => name.toLowerCase().endsWith("." + ext)))
-    throw new Error(formatError);
+    throw new Error(t("error.fontFormat"));
 }
 
 async function applyFont(bytes: Uint8Array<ArrayBuffer>) {
   const signature = String.fromCharCode(...bytes.subarray(0, 4));
   if (!["OTTO", "\x00\x01\x00\x00", "true", "wOF2"].includes(signature))
-    throw new Error(formatError);
+    throw new Error(t("error.fontFormat"));
   try {
     await new FontFace("Check", bytes).load();
   } catch {
-    throw new Error("无法读取此字体，请选择有效的字体文件");
+    throw new Error(t("error.invalidFont"));
   }
   await patchPrefs({
     customFont: await files.put(new Blob([bytes])),
@@ -32,8 +32,8 @@ export async function importFontFile(file: File) {
 export async function pickNativeFont() {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const path = await open({
-    title: "选择字体",
-    filters: [{ name: "字体文件", extensions: fontExtensions }],
+    title: t("font.choose"),
+    filters: [{ name: t("font.files"), extensions: fontExtensions }],
     fileAccessMode: "scoped",
   });
   if (!path) return false;

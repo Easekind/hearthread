@@ -3,7 +3,7 @@ import { CHUNK_ATTRIBUTE, splitSection } from './section-chunks.js'
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 // A section bigger than this is rendered as chunks of about CHUNK_SIZE bytes
-// (readest#1711): one huge document takes minutes to lay out and paint.
+// (#1711): one huge document takes minutes to lay out and paint.
 const CHUNK_THRESHOLD = 512 * 1024
 const CHUNK_SIZE = 256 * 1024
 const SECTION_SWIPE_DISTANCE = 48
@@ -80,7 +80,7 @@ const debounce = (f, wait, immediate) => {
 
 // How long a continuous run of scrolled-mode scroll events may last before a
 // relocate is forced mid-scroll, so reading progress keeps updating while the
-// scrolling never pauses (readest#5635).
+// scrolling never pauses (#5635).
 const SCROLL_RELOCATE_MAX_WAIT = 1000
 
 // Transforms ALL children of the container so multi-view layouts
@@ -167,7 +167,7 @@ export const startCssAnimateScroll = (element, scrollProp, startValue, endValue,
         // so the assignment above is clamped. Mid-book the clamp lands far
         // beyond the target and is invisible; on the last page of the book,
         // where the target *is* the maximum scroll offset, it lands a full page
-        // short and the page visibly snaps back (readest#5663).
+        // short and the page visibly snaps back (#5663).
         if (Math.abs(landed - targetPos) > 0.5) {
             // Forcing a layout here is not enough — the extent it reports is
             // restored, but the scroll clamp still uses the stale one for the
@@ -210,7 +210,7 @@ export const startCssAnimateScroll = (element, scrollProp, startValue, endValue,
 // Two-phase page-turn slide for vertical (vertical-rl/lr) paginated books.
 // Their pages read horizontally but CSS fragmentation stacks them along the
 // vertical scroll axis, so the outgoing and incoming page can never be on
-// screen side by side (readest#624). Instead the outgoing page exits
+// screen side by side (#624). Instead the outgoing page exits
 // horizontally along the page progression, the scroll offset jumps while the
 // viewport shows only the page background, and the incoming page follows in
 // from the opposite edge. `startX` continues from a finger drag already in
@@ -259,12 +259,12 @@ const slideTurnAnimation = (element, scrollProp, endValue, exitSign, width, dura
     }, exitDuration + 10)
 })
 
-// Layered page-turn styles (readest#555). The `slide` and `curl` turn styles
+// Layered page-turn styles (#555). The `slide` and `curl` turn styles
 // need the outgoing and incoming page on screen at once as separate layers,
 // which the rigid column strip inside one iframe cannot provide. The View
 // Transitions API can: the browser rasterizes the outgoing page (overlays and
 // annotations included) as a snapshot that animates over the live, stationary
-// incoming page — an Apple Books style slide or curl. The choreography lives
+// incoming page during the slide or curl. The choreography lives
 // in a document-level stylesheet because the ::view-transition pseudo tree
 // attaches to the document root, not to the paginator's shadow root.
 const VIEW_TRANSITION_CLASSES = [
@@ -369,7 +369,7 @@ const injectViewTransitionStyles = () => {
         mix-blend-mode: normal;
     }
     /* Slide: the moving page travels over the still page with a soft edge
-       shadow, like the Apple Books slide. Forward moves the outgoing
+       shadow. Forward moves the outgoing
        snapshot out on top; backward brings the incoming snapshot in on
        top of the still outgoing page. */
     .foliate-vt-slide.foliate-vt-forward::view-transition-old(foliate-turn) {
@@ -399,7 +399,7 @@ const injectViewTransitionStyles = () => {
     @keyframes foliate-turn-slide-in-left { from { transform: translateX(-100%); } }
     @keyframes foliate-turn-slide-in-right { from { transform: translateX(100%); } }
     /* Curl: a fold line travels across the page, peeling it off the still
-       page underneath like the Apple Books / Kindle curl. The fold is an
+       page underneath. The fold is an
        oversized gradient mask slid across the OLD snapshot (mask-position is
        animatable; gradients themselves are not), so the page dissolves over
        a soft band at the traveling edge — the lifted-page falloff. Chrome
@@ -631,7 +631,7 @@ const getVisibleRange = (doc, start, end, mapRect) => {
     // A text node can pass the overlap test above with none of its characters
     // in view: with no gap between columns, a line of the previous page ends on
     // the page edge, or its hanging space runs past it. A range starting at its
-    // end anchors on the previous page (readest#7631), so when its last
+    // end anchors on the previous page (#7631), so when its last
     // character ends before the page (within a pixel of layout rounding),
     // start at the next visible node.
     const endsBefore = node => {
@@ -688,7 +688,7 @@ const setSelectionTo = (target, collapse) => {
 // viewport as `aria-hidden`. Views still visible to sighted users (e.g. the
 // right column in a dual-page spread that belongs to a different section
 // than the left column) stay exposed to assistive tech.
-// See readest/readest#4243 and readest/readest#4259.
+// See #4243 and #4259.
 export const isViewVisibleInContainer = (viewRect, containerRect) =>
     viewRect.right > containerRect.left
     && viewRect.left < containerRect.right
@@ -699,7 +699,7 @@ export const getDirection = doc => {
     const { defaultView } = doc
     // A view's iframe document can be blank/detached while a section loads or
     // the view is torn down, leaving body null; getComputedStyle(null) then
-    // throws "parameter 1 is not of type 'Element'" (READEST-2X). Fall back to
+    // throws "parameter 1 is not of type 'Element'" (upstream report 2X). Fall back to
     // horizontal-ltr until real content is present.
     if (!defaultView || !doc.body) return { vertical: false, rtl: false }
     let { writingMode, direction } = defaultView.getComputedStyle(doc.body)
@@ -719,7 +719,7 @@ export const getDirection = doc => {
     // `vertical-rl` (Japanese/Chinese vertical) advances columns right-to-left
     // even though its computed `direction` stays `ltr`, so the writing mode
     // itself marks it RTL and page turns follow the horizontal-rtl convention
-    // (readest#624). Mirrors getDirection in the app's libs/document.ts.
+    // (#624). Mirrors getDirection in the app's libs/document.ts.
     const rtl = writingMode === 'vertical-rl'
         || doc.body.dir === 'rtl'
         || direction === 'rtl'
@@ -736,7 +736,7 @@ export const getPageProgressionRTL = (bookDir, documentRTL) =>
     bookDir === 'rtl' ? true : bookDir === 'ltr' ? false : documentRTL
 
 const getBackground = doc => {
-    // Same blank/detached-document guard as getDirection (READEST-2X).
+    // Same blank/detached-document guard as getDirection (upstream report 2X).
     if (!doc.defaultView || !doc.body) return ''
     const bodyStyle = doc.defaultView.getComputedStyle(doc.body)
     return bodyStyle.backgroundColor === 'rgba(0, 0, 0, 0)'
@@ -758,7 +758,7 @@ const getBackground = doc => {
 // margin gutters (the --_outer-min tracks that keep the left/right margins in
 // step with the centre gap). Otherwise a body-coloured page would spill its
 // colour into the outer gutter while an adjacent transparent/image page did not,
-// shifting the spread off-centre (~250px wide on a desktop, readest#4394). In
+// shifting the spread off-centre (~250px wide on a desktop, #4394). In
 // single-column mode the gutters are zero, so the clamp still fills the viewport
 // edge to edge. `views` is the sorted list of { size, bg } with bg already
 // resolved ('' = transparent → no segment).
@@ -786,7 +786,7 @@ export const computeBackgroundSegments = (views, scrollPos, bgSize, inset, conta
 // NOT paint a fill — an opaque fill would occlude the texture. Returns '' (no
 // fill, so the texture shows through) for a transparent page under a texture,
 // and the resolved colour otherwise. Shared by scrolled-mode view elements and
-// paginated-mode segments so both modes treat textures identically (readest#4399).
+// paginated-mode segments so both modes treat textures identically (#4399).
 export const textureAwareBackground = (resolved, hasTexture) => {
     // A page that paints an image (e.g. a cover set via body `background-image`)
     // is NOT transparent — it should occlude the texture, not be dropped. The
@@ -810,7 +810,7 @@ const makeMarginals = (length, part) => Array.from({ length }, () => {
 
 const setStyles = (el, styles) => {
     // el is doc.documentElement, which is null while a view's document is blank
-    // or detached mid-render/teardown (READEST-1H). Nothing to style then.
+    // or detached mid-render/teardown (upstream report 1H). Nothing to style then.
     if (!el) return
     const { style } = el
     for (const [k, v] of Object.entries(styles)) style.setProperty(k, v)
@@ -865,7 +865,7 @@ class View {
         // and a display:none subtree has no boxes at all, so anything the book
         // measures then comes back zero. The IDPF `trees` sample sizes its
         // canvas backing store from the element's own width, so it ended up
-        // 0x0 and drew nothing at all (readest/readest#6041). `visibility:
+        // 0x0 and drew nothing at all (#6041). `visibility:
         // hidden` still paints nothing while giving those scripts real
         // geometry to measure.
         Object.assign(this.#iframe.style, {
@@ -1118,7 +1118,7 @@ class View {
         // content box is the tile minus the padding. `--available-*` and the
         // image clamp must use the content box: sized to the whole tile, a
         // replaced element runs across the column gap and its trailing edge
-        // paints down the margin of the next page (readest/readest#6221).
+        // paints down the margin of the next page (#6221).
         // `--full-*` keeps the whole tile, which is what a bleed spans.
         const pageWidth = Math.trunc(width / this.#columnCount)
         const pageHeight = Math.trunc(height / this.#columnCount)
@@ -1193,7 +1193,7 @@ class View {
         // `canvas` belongs with the other replaced elements: a book is free to
         // size one past the page box, and without the clamp it spills over the
         // column rule and paints on top of the next column's text
-        // (readest/readest#6041).
+        // (#6041).
         const els = doc.body.querySelectorAll('img, svg, video, canvas')
         // clear previous inline constraints so we read CSS-authored values,
         // not stale pixel values from a previous resize (#3634)
@@ -1204,10 +1204,10 @@ class View {
         // Read every element's style before writing any of them. The margins
         // below are resolved values, so reading one flushes layout, and writing
         // the previous element's clamp dirtied it again — interleaving the two
-        // costs a full re-fragmentation of the section per element. A Duokan
+        // costs a full re-fragmentation of the section per element. A footnote-heavy
         // book marks each footnote with an inline <img>, so a volume kept in one
         // XHTML file reaches thousands of them and paged mode froze for minutes
-        // (readest/readest#6155). Batched, the whole pass costs one layout.
+        // (#6155). Batched, the whole pass costs one layout.
         const measured = []
         for (const el of els) {
             // preserve max size if they are already set in CSS
@@ -1221,7 +1221,7 @@ class View {
         // outside it, so an element the book sized at or past the column
         // still hangs its margins over the edge — the IDPF `trees` canvas
         // carries `margin: 1em` and spilled exactly 2em past the column
-        // rule (readest/readest#6041). Cap the margin box instead.
+        // rule (#6041). Cap the margin box instead.
         const fill = (a, b) => {
             const margins = (parseFloat(a) || 0) + (parseFloat(b) || 0)
             return margins > 0 ? `calc(100% - ${margins}px)` : '100%'
@@ -1261,11 +1261,11 @@ class View {
                     margin: '0',
                     // fit the whole page while keeping the aspect ratio
                     // ('contain' set for all images above); black bars fill
-                    // the leftover space like Duokan's native full-page render
+                    // the leftover space in fullscreen mode
                     'background-color': '#000',
                 })
                 // a page closer to a 20:9 phone than a 4:3 print cover shows
-                // the book's tall `~slim` variant (readest/readest#6513)
+                // the book's tall `~slim` variant (#6513)
                 const slim = el.getAttribute('data-duokan-slim-src')
                 if (slim) {
                     if (!el.hasAttribute('data-duokan-src'))
@@ -1280,7 +1280,7 @@ class View {
                         height: '100%',
                         margin: '0',
                         padding: '0',
-                        // a positioned wrapper (e.g. from duokan-bleed handling)
+                        // a positioned wrapper (e.g. from full-bleed image handling)
                         // would become the containing block for the pinned image,
                         // whose height:100% then resolves against the wrapper's
                         // zero height and the cover vanishes (#5263)
@@ -1675,7 +1675,7 @@ export class Paginator extends HTMLElement {
     // a page turn on a vertical book; consumed as the slide's start position
     // when the turn commits, or settled back to 0 when it doesn't.
     #dragTranslateX = 0
-    // Active finger-tracked layered turn (readest#555): a paused view
+    // Active finger-tracked layered turn (#555): a paused view
     // transition whose animations are scrubbed by the drag.
     #vtDrag = null
     // A released layered turn still owns the global View Transition until its
@@ -1786,7 +1786,7 @@ export class Paginator extends HTMLElement {
            When the host opts in, restore persistent compositor layers for the
            container and each view so the GPU cssAnimateScroll page-turn stays
            smooth on 120Hz ProMotion instead of promoting a layer on-demand
-           every turn (readest#4768). Paginated mode only; scrolled mode does
+           every turn (#4768). Paginated mode only; scrolled mode does
            its own compositing below. */
         :host([gpu-composite]:not([flow="scrolled"])) #container,
         :host([gpu-composite]:not([flow="scrolled"])) #container > * {
@@ -1803,7 +1803,7 @@ export class Paginator extends HTMLElement {
                re-invalidate after content-size changes (adjacent-section
                preloading right after open), so on Windows' always-on
                scrollbars it vanishes shortly after the book opens
-               (readest#4470). Scoped to scrolled mode to leave the paginated
+               (#4470). Scoped to scrolled mode to leave the paginated
                page-turn path un-composited. */
             transform: translateZ(0);
         }
@@ -1895,7 +1895,7 @@ export class Paginator extends HTMLElement {
             if (!this.scrolled && !this.#isAnimating) this.#replaceBackground()
             // Preload forward when fewer than minPages ahead. Skip while a finger
             // drag is in progress: loading a section runs columnize/expand on the
-            // main thread, which drops frames mid-swipe (readest#4785). The buffer
+            // main thread, which drops frames mid-swipe (#4785). The buffer
             // is still 4+ pages deep during a one-page drag, and the scroll that
             // settles the gesture re-fires this with the finger already up, so the
             // top-up just moves off the active drag instead of being skipped.
@@ -1923,7 +1923,7 @@ export class Paginator extends HTMLElement {
             }
             // Preload backward when fewer than minPages behind, mirroring the
             // forward buffer so scrolling up never dead-ends at the top with the
-            // previous section unloaded (readest/readest#4112). The
+            // previous section unloaded (#4112). The
             // #loadAdjacentSection scroll compensation keeps the viewport
             // anchored as the section is inserted above.
             if (this.scrolled && !this.noPreload && !this.noContinuousScroll
@@ -1951,12 +1951,12 @@ export class Paginator extends HTMLElement {
             // A scroll that never pauses — the Auto Scroll reading mode, a
             // held scroll key — resets the trailing debounce forever, so the
             // scrolled-mode relocate (and with it reading progress) would only
-            // fire once the scrolling stopped (readest#5635). Relocate at most
+            // fire once the scrolling stopped (#5635). Relocate at most
             // once per SCROLL_RELOCATE_MAX_WAIT while the run of scroll events
             // lasts; the debounced call still reports the final position and
             // ends the run. Skipped during a finger drag for the same reason
             // preloading is: the measurement drops frames mid-swipe, and the
-            // release settles through the debounce anyway (readest#4785).
+            // release settles through the debounce anyway (#4785).
             if (this.scrolled && !this.#isAnimating && !this.#touchScrolled) {
                 const now = Date.now()
                 if (scrollBurstStart == null) scrollBurstStart = now
@@ -2238,7 +2238,7 @@ export class Paginator extends HTMLElement {
     // Only `aria-hidden` is used — `inert` would also block pointer events
     // and text selection, which breaks visible non-primary views such as
     // the right column of a dual-page spread when each column belongs to
-    // a different section (readest/readest#4243, readest/readest#4259).
+    // a different section (#4243, #4259).
     //
     // Visible non-primary views stay exposed to assistive tech because a
     // sighted user can read them on the same spread.
@@ -2321,7 +2321,7 @@ export class Paginator extends HTMLElement {
     // per-frame repaint never re-runs getComputedStyle or one
     // getBoundingClientRect per view — those forced reads, multiplied by the views
     // preloaded at a chapter boundary, are what dropped frames mid-swipe
-    // (readest#4785).
+    // (#4785).
     #computePaginatedBgContext() {
         const doc = this.#primaryView?.document
         if (!doc?.documentElement) return null
@@ -2361,7 +2361,7 @@ export class Paginator extends HTMLElement {
         this.#background.innerHTML = ''
         this.#background.style.display = ''
         // Under a texture, leave the container transparent so the host texture
-        // shows through the gaps a transparent page no longer fills (readest#4399).
+        // shows through the gaps a transparent page no longer fills (#4399).
         this.#background.style.background = ctx.hasTexture ? '' : ctx.fallbackBg
 
         const posProp = this.#vertical ? 'top' : 'left'
@@ -2584,7 +2584,7 @@ export class Paginator extends HTMLElement {
     get noContinuousScroll() {
         return this.scrolled && this.hasAttribute('no-continuous-scroll')
     }
-    // The layered turn styles (slide/curl, readest#555) rasterize the outgoing
+    // The layered turn styles (slide/curl, #555) rasterize the outgoing
     // page with the View Transitions API; when the engine lacks it the caller
     // falls through to the push/two-phase animations, so old WebViews keep
     // working page turns.
@@ -2654,13 +2654,13 @@ export class Paginator extends HTMLElement {
     }
     get #renderedPages() {
         // A partial last page is a page. The tolerance absorbs layout-unit
-        // rounding, which can leave a half page a hair under half (readest#7303).
+        // rounding, which can leave a half page a hair under half (#7303).
         return Math.ceil(this.#renderedViewSize / this.size - 0.01)
     }
     // Sections are sized by columns so the next one can start beside the
     // previous one's end, which leaves the book's last section ending partway
     // into a page. Pad the views to whole pages, or the browser clamps the
-    // turn to the last page short of it (readest#7303).
+    // turn to the last page short of it (#7303).
     #padLastPage() {
         const padding = this.scrolled || !this.size ? 0
             : this.#renderedPages * this.size - this.#renderedViewSize
@@ -2679,7 +2679,7 @@ export class Paginator extends HTMLElement {
     // The transform goes on #container rather than its children on purpose: a
     // transform on the children shifts their border boxes and shrinks the
     // container's scrollable overflow, which desynchronizes the scroll math
-    // (readest#5663). Transforming the scrollport moves it as a whole and
+    // (#5663). Transforming the scrollport moves it as a whole and
     // leaves its scrollable overflow untouched.
     get subpixelOffset() {
         return this.#subpixelOffset
@@ -2734,7 +2734,7 @@ export class Paginator extends HTMLElement {
         if (!this.#scrollBounds) return
         // Page-turn swipes are horizontal in every writing mode: vertical-rl
         // books turn pages right-to-left like printed Japanese books
-        // (readest#624), vertical-lr left-to-right. Vertical gestures belong
+        // (#624), vertical-lr left-to-right. Vertical gestures belong
         // to the host's toolbar toggle, including a sideways lift-off flick.
         // Settle any horizontal drag started before the gesture turned vertical.
         if (this.#vertical && Math.abs(dx) <= Math.abs(dy)) {
@@ -2746,7 +2746,7 @@ export class Paginator extends HTMLElement {
         let page
         if (this.#vertical && !this.#layeredTurn
             && this.hasAttribute('animated') && !this.hasAttribute('eink')) {
-            // Drag-follow gestures on vertical books (readest#624): the views
+            // Drag-follow gestures on vertical books (#624): the views
             // tracked the finger, so judge the turn like a paged carousel by
             // where the drag ended plus the release flick, instead of the
             // displacement heuristic below (which over-commits once content
@@ -2886,7 +2886,7 @@ export class Paginator extends HTMLElement {
     }
     // With Paging Animation on, a swipe heading out of a single-section
     // boundary loads the adjacent chapter beside this one, and the finger then
-    // scrolls across into it (readest#6792).
+    // scrolls across into it (#6792).
     #startSectionPull(dir, along) {
         if (!this.hasAttribute('animated') || this.hasAttribute('eink')) return null
         const index = this.#adjacentIndex(dir)
@@ -3050,7 +3050,7 @@ export class Paginator extends HTMLElement {
         // layout is settled at the start of a gesture and only the scroll offset
         // changes while the finger moves, so every per-move #replaceBackground()
         // reuses this instead of forcing a fresh style+layout read each frame
-        // (readest#4785). Cleared in #onTouchEnd; the snap that follows rebuilds
+        // (#4785). Cleared in #onTouchEnd; the snap that follows rebuilds
         // its own.
         this.#bgAnimContext = this.scrolled ? null : this.#computePaginatedBgContext()
     }
@@ -3076,7 +3076,7 @@ export class Paginator extends HTMLElement {
         }
         if (this.scrolled) {
             // A swipe that began at a single-section boundary takes over the
-            // scroll once it heads past that boundary (readest#6792).
+            // scroll once it heads past that boundary (#6792).
             if (state.pull) {
                 e.preventDefault()
                 this.#dragSectionPull(state.pull, this.#touchAlong(e.changedTouches[0], state))
@@ -3157,7 +3157,7 @@ export class Paginator extends HTMLElement {
             // Vertical books track a horizontal finger by translating the
             // views sideways: their pages stack along the vertical scroll
             // axis, so the scroll offset itself cannot follow the finger
-            // (readest#624). The turn commits or settles on release in snap().
+            // (#624). The turn commits or settles on release in snap().
             this.#dragBy(dx)
         }
     }
@@ -3221,7 +3221,7 @@ export class Paginator extends HTMLElement {
         this.#vtDrag = null
         this.#finishLayeredDrag(drag, false)
     }
-    // Begin a finger-tracked layered turn (readest#555). Edge-originated
+    // Begin a finger-tracked layered turn (#555). Edge-originated
     // gestures can claim on their first clear inward move. In the middle, two
     // consecutive horizontal samples can claim after 6px; a vertical gesture
     // locks out the turn before a landing wobble can become a page animation.
@@ -3709,7 +3709,7 @@ export class Paginator extends HTMLElement {
     async #scrollToRect(rect, reason, owner) {
         if (this.scrolled) {
             // rect is local to the anchor's own view: mirror it through that
-            // view's size, not every mounted view's (readest#7555), and add
+            // view's size, not every mounted view's (#7555), and add
             // that view's offset to get container coordinates.
             const localOffset = this.#getRectMapper(owner?.view ?? this.#primaryView)(rect).left - 3
             const viewOffset = this.#getViewOffset(owner?.index ?? this.#primaryIndex)
@@ -3787,7 +3787,7 @@ export class Paginator extends HTMLElement {
         if (this.scrolled && this.#vertical) offset = -offset
         if (animate) {
             // Layered turn styles: snapshot the outgoing page and animate it
-            // over the live, stationary incoming page (readest#555). Works
+            // over the live, stationary incoming page (#555). Works
             // for every writing mode since the snapshot is axis-agnostic —
             // but only for actual page changes: a sub-page settle must not
             // snapshot and re-slide the page it is already resting on.
@@ -3800,7 +3800,7 @@ export class Paginator extends HTMLElement {
             // horizontally, so a scroll-axis slide would move perpendicular to
             // the page turn. Run the two-phase horizontal slide instead:
             // vertical-rl turns forward exit to the right (page progression),
-            // vertical-lr to the left (readest#624).
+            // vertical-lr to the left (#624).
             if (!this.scrolled && this.#vertical) {
                 this.#bgAnimContext = null
                 // Oversized sections would composite as one giant layer to
@@ -3840,7 +3840,7 @@ export class Paginator extends HTMLElement {
             const id = ++this.#slideTurnId
             // Snapshot the invariant paint inputs once; every per-frame
             // #replaceBackground below reuses this instead of forcing a fresh
-            // style+layout read each frame (readest#4785).
+            // style+layout read each frame (#4785).
             this.#bgAnimContext = this.scrolled ? null : this.#computePaginatedBgContext()
             // For a large section the CSS-transform animation blocks the UI while
             // Blink composites the oversized layer; animate the native scroll
@@ -3848,7 +3848,7 @@ export class Paginator extends HTMLElement {
             // per-page backgrounds synced each frame. Hosts that composite large
             // layers without that freeze (Apple WebKit, via the gpu-composite
             // opt-in) skip this main-thread fallback and keep the smooth GPU
-            // cssAnimateScroll path even for large sections (readest#4768).
+            // cssAnimateScroll path even for large sections (#4768).
             if (!this.hasAttribute('gpu-composite')
                 && this.#renderedViewSize > RAF_ANIMATE_SCROLL_THRESHOLD) {
                 const anim = startRafAnimateScroll(startPosition, offset, 300, easeOutQuad, x => {
@@ -3901,10 +3901,10 @@ export class Paginator extends HTMLElement {
             this.#afterScroll(reason)
         }
     }
-    // Turn the page with a View Transitions snapshot (readest#555): the live
+    // Turn the page with a View Transitions snapshot (#555): the live
     // content jumps to the destination inside the transition callback, then
     // the rasterized outgoing page slides away or curls open ON TOP of it, so
-    // the incoming page stays perfectly still underneath (Apple Books style).
+    // the incoming page stays perfectly still underneath.
     // Forward turns move the old snapshot out; backward turns bring the new
     // snapshot in over the still page. The choreography is selected with
     // classes on the document root, where the ::view-transition pseudo tree
@@ -3975,7 +3975,7 @@ export class Paginator extends HTMLElement {
             const rect = Array.from(rects)
                 .find(r => r.width > 0 && r.height > 0 && r.x >= 0 && r.y >= 0) || rects[0]
             // An anchor can have no client rects at all: a range over content
-            // that is entirely absolutely positioned (e.g. a Duokan fullscreen
+            // that is entirely absolutely positioned (e.g. a fullscreen
             // cover pins its only image) has no in-flow boxes. Bailing without
             // scrolling would leave #scrollBounds unseeded, and scrollBy/snap
             // then silently drop every swipe on the page (#5263). Settle on
@@ -4053,7 +4053,7 @@ export class Paginator extends HTMLElement {
             // the one to show. Falling back to the first overlapping view (the
             // old behaviour) would report a thin sliver at the top edge, whose
             // chapter title no longer matches the dominant content
-            // (readest#4436). Keep that first valid range as a fallback for
+            // (#4436). Keep that first valid range as a fallback for
             // when no loaded view covers the centre (e.g. at the very top or
             // bottom of the book).
             const center = this.#renderedStart + this.size / 2
@@ -4214,7 +4214,7 @@ export class Paginator extends HTMLElement {
         // the reflowed page's visible range as the new anchor then moves the
         // anchor to that page's start, which precedes the old anchor whenever
         // the two layouts' page boundaries differ, so the next resize back
-        // settles one page earlier every time (readest#5808). A container
+        // settles one page earlier every time (#5808). A container
         // scroll that keeps the anchor on the page is not a navigation away
         // from it: keep the anchor.
         else if (reason !== 'container-scroll' || !this.#anchorIsVisible(range))
@@ -4349,7 +4349,7 @@ export class Paginator extends HTMLElement {
         // loaded view in scrolled mode. The browser suppresses scroll
         // anchoring while scrollTop is 0, so the inserted section would push
         // the visible content down and the viewport would drift into the
-        // previous section (readest/readest#4112). Capture the scroll position
+        // previous section (#4112). Capture the scroll position
         // before the insertion so it can be restored once the view renders.
         const firstIndex = this.#sortedViews[0]?.[0]
         const isPrepend = this.scrolled && firstIndex != null && index < firstIndex
@@ -4565,7 +4565,7 @@ export class Paginator extends HTMLElement {
             // Continuous scrolled mode keeps the target view rendered, so we
             // scroll straight to it without fading the container — fading
             // produced a hard blank-screen flash on adjacent navigation
-            // (readest/readest#4112 follow-up). Paginated mode and discrete
+            // (#4112 follow-up). Paginated mode and discrete
             // no-continuous-scroll still fade to hide the page reposition.
             const blank = !this.scrolled || this.noContinuousScroll
             if (blank) this.#container.style.opacity = '0'

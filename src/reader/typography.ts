@@ -12,7 +12,10 @@ export function isSystemFont(category: Category, family: string) {
   return Object.hasOwn(readingFonts[category].fonts, family);
 }
 
-export function systemFontOptions(category: Category): Record<string, string> {
+export function systemFontOptions(
+  category: Category,
+  locale: Preferences["locale"],
+): Record<string, string> {
   const ctx = document.createElement("canvas").getContext("2d");
   if (!ctx) return {};
   // An unavailable family renders the probe entirely in the monospace fallback.
@@ -20,10 +23,12 @@ export function systemFontOptions(category: Category): Record<string, string> {
   ctx.font = "40px monospace";
   const fallback = ctx.measureText(sample).width;
   return Object.fromEntries(
-    Object.entries(readingFonts[category].fonts).filter(([name]) => {
-      ctx.font = `40px "${name}", monospace`;
-      return ctx.measureText(sample).width !== fallback;
-    }),
+    Object.entries(readingFonts[category].fonts)
+      .filter(([name]) => {
+        ctx.font = `40px "${name}", monospace`;
+        return ctx.measureText(sample).width !== fallback;
+      })
+      .map(([name, label]) => [name, locale === "en" ? name : label]),
   );
 }
 

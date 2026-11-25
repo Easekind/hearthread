@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {
   Suspense,
   lazy,
@@ -56,6 +57,8 @@ export default function Reader({
         location: p.location,
         progress: Math.max(0, Math.min(100, p.progress)),
         chapter: p.chapter,
+        sectionIndex:
+          initial.type === "EPUB" && !p.chapter ? p.index : undefined,
       });
     return lastSave.current;
   }
@@ -215,12 +218,12 @@ export default function Reader({
   );
   const heading =
     panel === "toc"
-      ? "目录"
+      ? t("reader.contents")
       : panel === "type"
         ? pdf
-          ? "阅读纸色"
-          : "阅读排版"
-        : "书内搜索";
+          ? t("reader.paper")
+          : t("settings.typography")
+        : t("reader.find");
   function go(t: string | number) {
     engine.current?.go(t);
     setPanel("");
@@ -231,7 +234,7 @@ export default function Reader({
       className="reading-layer layer-scroll"
       role="dialog"
       aria-modal="true"
-      aria-label="阅读书籍"
+      aria-label={t("reader.dialog")}
       tabIndex={-1}
       ref={layer}
     >
@@ -243,22 +246,30 @@ export default function Reader({
       >
         {!tools && (
           <button className="reading-tools-access" onClick={() => show(true)}>
-            显示阅读工具
+            {t("reader.showTools")}
           </button>
         )}
         <header className="room-head" inert={!tools && !error}>
-          <button className="room-back" aria-label="返回书库" onClick={leave}>
+          <button
+            className="room-back"
+            aria-label={t("reader.back")}
+            onClick={leave}
+          >
             <Icon name="back" />
-            <span>书库</span>
+            <span>{t("library.title")}</span>
           </button>
           <div className="room-identity">
             <strong>{book.title}</strong>
-            <small>{book.author.replace(" / 示例文档", "")}</small>
+            <small>
+              {book.object
+                ? book.author
+                : book.author.replace(" / 示例文档", "")}
+            </small>
           </div>
           <div className="room-actions">
             <Tool
               className="room-tool"
-              label="书内搜索"
+              label={t("reader.find")}
               symbol="search"
               aria-expanded={panel === "search"}
               onClick={() => selectPanel("search")}
@@ -276,10 +287,10 @@ export default function Reader({
         >
           {error ? (
             <section className="reading-content" role="alert">
-              <h1>无法打开这本书</h1>
+              <h1>{t("reader.failed")}</h1>
               <p>{error}</p>
               <button className="button" onClick={leave}>
-                返回书库
+                {t("reader.back")}
               </button>
             </section>
           ) : (
@@ -292,16 +303,20 @@ export default function Reader({
         </div>
         {!ready && !error && (
           <div className="reader-loading" role="status">
-            正在打开书籍…{" "}
+            {t("reader.opening")}{" "}
             <button className="button" onClick={leave}>
-              返回书库
+              {t("reader.back")}
             </button>
           </div>
         )}
-        <footer className="room-dock" aria-label="阅读工具" inert={!tools}>
+        <footer
+          className="room-dock"
+          aria-label={t("reader.tools")}
+          inert={!tools}
+        >
           <Tool
             className="room-tool"
-            label="目录"
+            label={t("reader.contents")}
             aria-expanded={panel === "toc"}
             symbol="contents"
             onClick={() => selectPanel("toc")}
@@ -310,7 +325,7 @@ export default function Reader({
             {(!pdf || book.object) && (
               <Tool
                 className="room-tool"
-                label={epub ? "上一页" : "向上翻页"}
+                label={epub ? t("reader.prev") : t("reader.pageUp")}
                 symbol="previous"
                 onClick={() => engine.current?.turn(-1)}
               />
@@ -318,11 +333,11 @@ export default function Reader({
             {epub ? (
               <div className="chapter-position">
                 <span>
-                  第 {index + 1} 章 <i>/ {count}</i>
+                  {t("reader.chapter", { number: index + 1 })} <i>/ {count}</i>
                 </span>
                 {count > 1 && (
                   <Slider
-                    aria-label="选择章节"
+                    aria-label={t("reader.selectChapter")}
                     value={[index + 1]}
                     min={1}
                     max={count}
@@ -333,12 +348,12 @@ export default function Reader({
             ) : pdf ? (
               <button
                 className="pdf-fit"
-                aria-label="切换 PDF 显示宽度"
+                aria-label={t("reader.fit")}
                 aria-pressed={wide}
                 onClick={() => setWide((v) => !v)}
               >
-                第 {book.object ? index + 1 : 3} 页 ·{" "}
-                {wide ? "适合宽度" : "适合页面"}{" "}
+                {t("reader.page", { number: book.object ? index + 1 : 3 })} ·{" "}
+                {wide ? t("reader.fitWidth") : t("reader.fitPage")}{" "}
                 <Icon name={wide ? "fitWidth" : "fitPage"} />
               </button>
             ) : (
@@ -347,7 +362,7 @@ export default function Reader({
             {(!pdf || book.object) && (
               <Tool
                 className="room-tool"
-                label={epub ? "下一页" : "向下翻页"}
+                label={epub ? t("reader.next") : t("reader.pageDown")}
                 symbol="next"
                 onClick={() => engine.current?.turn(1)}
               />
@@ -355,7 +370,7 @@ export default function Reader({
           </div>
           <Tool
             className="room-tool"
-            label={pdf ? "阅读纸色" : "阅读排版"}
+            label={pdf ? t("reader.paper") : t("settings.typography")}
             aria-expanded={panel === "type"}
             symbol={pdf ? "sun" : "type"}
             onClick={() => selectPanel("type")}
@@ -367,7 +382,7 @@ export default function Reader({
               <h2>{heading}</h2>
               <Tool
                 symbol="close"
-                label={"关闭" + heading}
+                label={t("reader.closePanel", { heading })}
                 onClick={() => setPanel("")}
               />
             </div>
@@ -381,7 +396,7 @@ export default function Reader({
                   />
                 )}
                 <Papers
-                  label="阅读纸色"
+                  label={t("reader.paper")}
                   options={themeOptions}
                   value={prefs.paper}
                   change={(paper) => void patchPrefs({ paper })}
@@ -399,7 +414,7 @@ export default function Reader({
                       })
                     }
                   >
-                    恢复默认排版
+                    {t("reader.reset")}
                   </button>
                 )}
               </>
@@ -417,7 +432,7 @@ export default function Reader({
                     </button>
                   ))
                 ) : (
-                  <p>本书没有目录</p>
+                  <p>{t("reader.noContents")}</p>
                 )}
               </div>
             ) : (
@@ -427,15 +442,15 @@ export default function Reader({
                   <input
                     autoFocus
                     type="search"
-                    aria-label="搜索本书"
-                    placeholder="搜索本书"
+                    aria-label={t("reader.search")}
+                    placeholder={t("reader.search")}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
                 </label>
                 <div id="book-results" className="contents-list">
                   {searching ? (
-                    <p>正在搜索…</p>
+                    <p>{t("reader.searching")}</p>
                   ) : results.length ? (
                     results.map((hit, i) => (
                       <button key={i} onClick={() => go(hit.target)}>
@@ -443,7 +458,7 @@ export default function Reader({
                       </button>
                     ))
                   ) : (
-                    query && <p>没有找到匹配的文字</p>
+                    query && <p>{t("reader.noMatches")}</p>
                   )}
                 </div>
               </>

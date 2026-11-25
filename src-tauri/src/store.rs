@@ -53,7 +53,7 @@ impl Library {
             .pragma_query_value(None, "user_version", |r| r.get(0))
             .map_err(err)?;
         if version > 1 {
-            return Err("请使用新版 hearthread 打开此书库".into());
+            return Err("Open this library with a newer version of hearthread".into());
         }
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
           CREATE TABLE IF NOT EXISTS records(key TEXT PRIMARY KEY,value TEXT NOT NULL,version INTEGER NOT NULL);
@@ -98,7 +98,7 @@ impl Library {
             }
             .map_err(err)?;
             if updated == 0 {
-                return Err("书库已更新，请重新载入后再试".into());
+                return Err("error.conflict".into());
             }
         }
         tx.commit().map_err(err)
@@ -119,9 +119,9 @@ impl Library {
     }
     pub fn append(&self, id: u32, offset: u64, bytes: &[u8]) -> Result<()> {
         let mut uploads = self.uploads.lock().map_err(err)?;
-        let stage = uploads.get_mut(&id).ok_or("导入会话已结束")?;
+        let stage = uploads.get_mut(&id).ok_or("error.uploadClosed")?;
         if offset != stage.written || bytes.len() as u64 > stage.expected - stage.written {
-            return Err("文件分块位置错误".into());
+            return Err("error.chunkPosition".into());
         }
         stage.file.write_all(bytes).map_err(err)?;
         stage.hash.update(bytes);
@@ -138,9 +138,9 @@ impl Library {
             .lock()
             .map_err(err)?
             .remove(&id)
-            .ok_or("导入会话已结束")?;
+            .ok_or("error.uploadClosed")?;
         if stage.written != stage.expected {
-            return Err("文件尚未完整写入".into());
+            return Err("error.incompleteFile".into());
         }
         let digest: String = stage
             .hash
@@ -161,11 +161,11 @@ impl Library {
     }
     pub fn object(&self, digest: &str) -> Result<PathBuf> {
         if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
-            return Err("无效文件标识".into());
+            return Err("error.fileId".into());
         }
         let path = self.root.join("objects").join(digest);
         if !path.is_file() {
-            return Err("找不到书籍原文件".into());
+            return Err("error.missingOriginal".into());
         }
         Ok(path)
     }

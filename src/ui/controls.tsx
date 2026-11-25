@@ -1,3 +1,4 @@
+import { t, type MessageKey } from "../i18n";
 import {
   useEffect,
   useMemo,
@@ -224,7 +225,7 @@ export function Select({
         <button
           type="button"
           className="tool-trigger field-trigger"
-          aria-label={label + "，" + options[value]}
+          aria-label={t("select.value", { label, value: options[value] })}
           id={id}
         >
           {icon && <Icon name={icon} />}
@@ -269,7 +270,7 @@ export function Modal({
         >
           <div className="row between">
             <DialogPrimitive.Title>{title}</DialogPrimitive.Title>
-            <Tool symbol="close" label="关闭对话框" onClick={close} />
+            <Tool symbol="close" label={t("dialog.close")} onClick={close} />
           </div>
           <div className="dialog-content">{children}</div>
           {footer && <div className="modal-actions">{footer}</div>}
@@ -278,11 +279,11 @@ export function Modal({
     </DialogPrimitive.Root>
   );
 }
-const themeLabels: Record<Theme, string> = {
-  light: "素白",
-  paper: "暖纸",
-  dark: "墨夜",
-  system: "跟随系统",
+const themeLabels: Record<Theme, MessageKey> = {
+  light: "theme.light",
+  paper: "theme.paper",
+  dark: "theme.dark",
+  system: "theme.system",
 };
 export function Papers<T extends Theme>({
   value,
@@ -308,7 +309,7 @@ export function Papers<T extends Theme>({
           <span className={"paper-sample " + p} aria-hidden="true">
             {p === "system" ? <Icon name="monitor" /> : "Aa"}
           </span>
-          <span>{themeLabels[p]}</span>
+          <span>{t(themeLabels[p])}</span>
           {value === p && <Icon name="check" />}
         </button>
       ))}
@@ -327,25 +328,25 @@ export function TypeControls({
   const key = prefs.customFont;
   const fonts = useMemo(
     () => ({
-      default: "系统默认",
-      ...systemFontOptions(prefs.fontCategory),
+      default: t("font.default"),
+      ...systemFontOptions(prefs.fontCategory, prefs.locale),
       ...(key
         ? {
             custom: customFontName
-              ? customFontName + "（已导入）"
-              : "自定义字体",
+              ? t("font.imported", { name: customFontName })
+              : t("font.custom"),
           }
         : {}),
     }),
-    [prefs.fontCategory, key, customFontName],
+    [prefs.fontCategory, prefs.locale, key, customFontName],
   );
   return (
     <div className="type-controls">
       <div className="face-row">
-        <span>字体类别</span>
+        <span>{t("font.category")}</span>
         <Select
-          label="字体类别"
-          options={{ serif: "衬线", sans: "无衬线" }}
+          label={t("font.category")}
+          options={{ serif: t("font.serif"), sans: t("font.sans") }}
           value={prefs.fontCategory}
           change={(category) => {
             if (
@@ -357,9 +358,9 @@ export function TypeControls({
         />
       </div>
       <div className="face-row">
-        <span>字体</span>
+        <span>{t("font.family")}</span>
         <Select
-          label="字体"
+          label={t("font.family")}
           options={fonts}
           value={
             Object.hasOwn(fonts, prefs.fontFamily)
@@ -373,15 +374,15 @@ export function TypeControls({
         [
           {
             key: "size",
-            label: "字号",
+            label: t("font.size"),
             unit: " px",
             ...typeLimits.size,
             step: 1,
           },
           {
             key: "leading",
-            label: "行距",
-            unit: " 倍",
+            label: t("font.leading"),
+            unit: t("font.multiplier"),
             ...typeLimits.leading,
             step: 0.05,
           },

@@ -1,3 +1,5 @@
+import type { Locale } from "./i18n";
+
 export type Format = "EPUB" | "PDF" | "MD";
 export const themeOptions = ["light", "paper", "dark", "system"] as const;
 export type Theme = (typeof themeOptions)[number];
@@ -11,6 +13,7 @@ export interface Book {
   style: string;
   progress: number;
   chapter: string;
+  sectionIndex?: number;
   size: string;
   pinned: boolean;
   readAt: number;
@@ -22,6 +25,7 @@ export interface Book {
   deleted?: boolean;
 }
 export interface Preferences {
+  locale: Locale;
   theme: Theme;
   paper: Theme;
   size: number;
@@ -38,6 +42,7 @@ export interface Catalog {
   prefs: Preferences;
 }
 export const defaults: Preferences = {
+  locale: "en",
   theme: "light",
   paper: "light",
   size: 20,
