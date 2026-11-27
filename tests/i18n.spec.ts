@@ -1,3 +1,4 @@
+import { markdown, readingPage } from "./reader-surface";
 import { expect, test } from "@playwright/test";
 
 // A Chinese OS must still get the product's English first-launch default.
@@ -11,7 +12,7 @@ for (const width of [1440, 390]) {
       await expect(
         page.getByRole("heading", { name: "My library" }),
       ).toBeVisible();
-      await expect(page.locator(".heading-name")).toContainText("12 books");
+      await expect(page.locator(".heading-name")).toContainText("3 books");
       await expect(page).toHaveTitle("hearthread · Library");
       await page
         .getByRole("button", { name: "Import books", exact: true })
@@ -32,10 +33,10 @@ for (const width of [1440, 390]) {
         .getByRole("button", { name: "Select 我的 notes", exact: true })
         .dblclick();
       const reader = page.locator(".reading-layer");
-      await expect(page.locator(".markdown-content h1")).toHaveText(
-        "原文 stays",
-      );
-      await reader.evaluate((el) => (el.scrollTop = 600));
+      await expect(markdown(page).locator("h1")).toHaveText("原文 stays");
+      await reader.focus();
+      await page.keyboard.press("ArrowRight");
+      await expect.poll(() => readingPage(page)).toBeGreaterThan(0);
       await reader.focus();
       await page.keyboard.press("Enter");
       await page.getByRole("button", { name: "Back to library" }).click();
@@ -89,12 +90,8 @@ for (const width of [1440, 390]) {
       await page
         .getByRole("button", { name: "选择 我的 notes", exact: true })
         .dblclick();
-      await expect(page.locator(".markdown-content h1")).toHaveText(
-        "原文 stays",
-      );
-      await expect
-        .poll(() => reader.evaluate((el) => el.scrollTop))
-        .toBeGreaterThan(500);
+      await expect(markdown(page).locator("h1")).toHaveText("原文 stays");
+      await expect.poll(() => readingPage(page)).toBeGreaterThan(0);
       await page.keyboard.press("Escape");
       await openLanguage(true);
       await page.getByRole("menuitemradio", { name: "English" }).click();

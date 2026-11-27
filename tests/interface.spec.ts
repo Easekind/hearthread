@@ -17,7 +17,7 @@ for (const [width, height] of [
       ["app", "/"],
     ]) {
       await page.goto(url);
-      await expect(page.locator(".wall-item")).toHaveCount(12);
+      await expect(page.locator(".wall-item")).toHaveCount(3);
       await page.evaluate(() => document.fonts.ready);
       await page.locator(".wall-select").first().waitFor();
       await page.screenshot({
@@ -50,7 +50,9 @@ for (const [width, height] of [
 test("manage, find and restore a deleted book", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "列表", exact: true }).click();
-  await page.getByRole("button", { name: "瓦尔登湖 的更多操作" }).click();
+  await page
+    .getByRole("button", { name: "瓦尔登湖（节选） 的更多操作" })
+    .click();
   await page.getByText("重命名", { exact: true }).click();
   await page.getByLabel("书籍名称").fill("林间读本");
   await page.getByRole("button", { name: "保存", exact: true }).click();
@@ -137,15 +139,13 @@ test("system appearance and typography sliders persist between surfaces", async 
   await expect(
     page.getByRole("button", { name: "字体，" + selectedFont }),
   ).toBeVisible();
-  await expect(page.locator(".reading-content p").first()).toHaveCSS(
-    "font-family",
-    previewFamily,
-  );
-  const chapter = page.getByRole("slider", { name: "选择章节" });
-  const initialChapter = await chapter.getAttribute("aria-valuenow");
+  await expect(
+    page.frameLocator("foliate-paginator iframe").first().locator("p").first(),
+  ).toHaveCSS("font-family", previewFamily);
+  await expect(page.locator(".page-position")).toHaveText("第 1 页");
   await size.press("ArrowLeft");
   await expect(size).toHaveAttribute("aria-valuenow", "29");
-  await expect(chapter).toHaveAttribute("aria-valuenow", initialChapter!);
+  await expect(page.locator(".page-position")).toHaveText("第 1 页");
   await page.getByRole("button", { name: "恢复默认排版" }).click();
   await expect(
     page.getByRole("button", { name: "字体类别，衬线" }),

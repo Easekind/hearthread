@@ -1,3 +1,4 @@
+import { pageRange } from './page-numbers.js'
 import { CHUNK_ATTRIBUTE, splitSection } from './section-chunks.js'
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -4829,6 +4830,10 @@ export class Paginator extends HTMLElement {
     }
     lastSection() {
         return this.#goToUnit(this.sections.findLastIndex(section => section.linear !== 'no'))
+    }
+    get rtl() { return this.#rtl }
+    getPageRange(fontKey, prepare) {
+        return pageRange(this, this.#sortedViews, this.#renderedStart, this.size / this.columnCount, this.#styles, fontKey, prepare)
     }
     getContents() {
         const contents = []

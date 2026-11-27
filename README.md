@@ -4,7 +4,9 @@ English · [简体中文](README.zh-CN.md)
 
 Hearthread is a local-first, cross-platform personal library. It starts with immersive reading and is growing to unify books, documents and images in one place.
 
-![The book wall with twelve covers and the selected book in the reading bar](docs/verification/library-desktop.png)
+The starter library includes eight chapter selections from _Walden_ (EPUB), an 80-page illustrated selection from _The Seven Lamps of Architecture_ (PDF), and all twenty books of _The Analects_ (Markdown). All three open offline and can be exported.
+
+![The book wall with three covers and the selected book in the reading bar](docs/verification/library-desktop.png)
 
 ![A sample chapter in reading view with the controls tucked away](docs/verification/reader-desktop.png)
 
@@ -13,7 +15,7 @@ Hearthread is a local-first, cross-platform personal library. It starts with imm
 - **One personal library.** Organize EPUB books, PDFs and Markdown documents by category and search them from one shelf. Image management is planned.
 - **Immersive reading.** Tap the page to hide the controls, adjust the font and line spacing, and return to the passage where you left off. Reading starts in single-page mode. On wider tablet and desktop windows, you can switch to a two-page spread.
 - **Desktop and mobile.** hearthread targets macOS, Windows, iOS and Android. A library backup lets you carry your books and reading positions to another device.
-- **Efficient rendering.** EPUB chapters load on demand. The PDF reader draws the visible pages and cancels unfinished rendering when you turn the page.
+- **Efficient rendering.** Markdown and reflowable EPUB share text pagination. PDFs use the same single-page and spread layout as fixed-layout EPUB, with PDF.js drawing each original page and its selectable text.
 
 ## Local development
 

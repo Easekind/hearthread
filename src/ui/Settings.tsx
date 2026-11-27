@@ -354,7 +354,7 @@ export function Settings({
                     [t("library.search"), mod + " K"],
                     [t("library.import"), mod + " O"],
                     [t("reader.find"), mod + " F"],
-                    [t("reader.changeChapter"), "← / →"],
+                    [t("reader.turnPage"), "← / →"],
                     [t("panel.close"), "Esc"],
                   ].map(([name, key]) => (
                     <Row key={name} name={name}>

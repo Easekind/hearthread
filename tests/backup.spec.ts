@@ -1,3 +1,4 @@
+import { markdown, columnCount } from "./reader-surface";
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./chinese-library";
 test("export library and restore into a fresh local store", async ({
@@ -18,7 +19,7 @@ test("export library and restore into a fresh local store", async ({
   await page
     .getByRole("button", { name: "选择 备份样本", exact: true })
     .dblclick();
-  await page.locator(".markdown-content h1").click();
+  await markdown(page).locator("h1").click();
   await page.getByRole("button", { name: "阅读排版", exact: true }).click();
   await page.getByRole("button", { name: "双屏", exact: true }).click();
   await page.getByRole("button", { name: "返回书库" }).click();
@@ -75,12 +76,9 @@ test("export library and restore into a fresh local store", async ({
     await fresh
       .getByRole("button", { name: "选择 备份样本", exact: true })
       .dblclick();
-    await expect(fresh.locator(".markdown-content h1")).toHaveText("已恢复");
-    await expect(fresh.locator(".text-document")).toHaveAttribute(
-      "data-layout",
-      "double",
-    );
-    const paragraph = fresh.locator(".markdown-content p");
+    await expect(markdown(fresh).locator("h1")).toHaveText("已恢复");
+    await expect.poll(() => columnCount(fresh)).toBe(2);
+    const paragraph = markdown(fresh).locator("p");
     await expect(paragraph).toHaveCSS("font-size", "12px");
     await expect(paragraph).toHaveCSS("line-height", "12px");
     await expect(paragraph).toHaveCSS("font-family", /UserReading.*system-ui/);

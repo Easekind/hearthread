@@ -1,3 +1,4 @@
+import { SearchResults } from "./SearchResults";
 import { t } from "../i18n";
 import {
   Suspense,
@@ -15,11 +16,8 @@ import { bookSource, patchBooks, patchPrefs } from "../storage/catalog";
 import { Icon, Papers, Tool, TypeControls, typeStyle } from "../ui/controls";
 import { useCustomFontName } from "../ui/useCustomFontName";
 import { useResolvedTheme } from "../ui/useResolvedTheme";
-import { Slider } from "../ui/slider";
-import type { Destination, Position, ReaderEngine } from "./engine";
-const Epub = lazy(() => import("./Epub")),
-  Pdf = lazy(() => import("./Pdf")),
-  TextDocument = lazy(() => import("./TextDocument"));
+import type { Destination, Position, SearchHit, ReaderEngine } from "./engine";
+const BookView = lazy(() => import("./BookView"));
 const spreadViewport = matchMedia("(min-width: 720px) and (min-height: 500px)");
 function subscribeToViewport(notify: () => void) {
   spreadViewport.addEventListener("change", notify);
@@ -41,10 +39,10 @@ export default function Reader({
     [panel, setPanel] = useState(""),
     [wide, setWide] = useState(false);
   const [toc, setToc] = useState<Destination[]>([]),
-    [count, setCount] = useState(0),
+    [pages, setPages] = useState<number[]>([]),
     [index, setIndex] = useState(0),
     [query, setQuery] = useState(""),
-    [results, setResults] = useState<Destination[]>([]),
+    [results, setResults] = useState<SearchHit[]>([]),
     [searching, setSearching] = useState(false),
     [ready, setReady] = useState(false);
   const layer = useRef<HTMLElement>(null),
@@ -76,8 +74,6 @@ export default function Reader({
     timer.current = setTimeout(flush, 200);
   }
   async function leave() {
-    const current = engine.current?.capture?.();
-    if (current) pending.current = current;
     try {
       await flush();
       close();
@@ -124,11 +120,7 @@ export default function Reader({
       })
       .catch(fail);
     const hide = () => {
-      if (document.hidden) {
-        const p = engine.current?.capture?.();
-        if (p) pending.current = p;
-        void flush();
-      }
+      if (document.hidden) void flush();
     };
     document.addEventListener("visibilitychange", hide);
     window.addEventListener("pagehide", flush);
@@ -199,14 +191,6 @@ export default function Reader({
       abort.abort();
     };
   }, [panel, query, ready]);
-  const component = initial.object
-    ? initial.type === "EPUB"
-      ? Epub
-      : initial.type === "PDF"
-        ? Pdf
-        : TextDocument
-    : TextDocument;
-  const Engine = component;
   const paper = useResolvedTheme(prefs.paper);
   const canShowSpread = useSyncExternalStore(
     subscribeToViewport,
@@ -225,15 +209,14 @@ export default function Reader({
     position,
     toggle,
     fail,
-    ready: (api: ReaderEngine, items: Destination[], n: number) => {
+    pages: setPages,
+    ready: (api: ReaderEngine, items: Destination[]) => {
       engine.current = api;
       setToc(items);
-      setCount(n);
       setReady(true);
     },
   };
-  const epub = book.type === "EPUB",
-    pdf = book.type === "PDF";
+  const pdf = book.type === "PDF";
   const customFontName = useCustomFontName(
     panel === "type" && !pdf ? prefs.customFont : undefined,
   );
@@ -245,13 +228,14 @@ export default function Reader({
           ? t("reader.display")
           : t("settings.typography")
         : t("reader.find");
-  const firstPage = index - (index % 2) + 1;
-  const pdfLabel =
-    book.object && pageLayout === "double" && firstPage < count
-      ? t("reader.pages", { first: firstPage, last: firstPage + 1 })
-      : t("reader.page", { number: book.object ? index + 1 : 3 });
-  function go(t: string | number) {
-    engine.current?.go(t);
+  const pageLabel =
+    pages.length === 2
+      ? t("reader.pages", { first: pages[0], last: pages[1] })
+      : pages.length
+        ? t("reader.page", { number: pages[0] })
+        : "—";
+  function go(t: string | number, hit?: SearchHit) {
+    engine.current?.go(t, hit);
     setPanel("");
     layer.current?.focus();
   }
@@ -323,7 +307,7 @@ export default function Reader({
           ) : (
             <EngineBoundary fail={fail}>
               <Suspense fallback={null}>
-                {source && <Engine {...props} />}
+                {source && <BookView {...props} />}
               </Suspense>
             </EngineBoundary>
           )}
@@ -349,56 +333,19 @@ export default function Reader({
             onClick={() => selectPanel("toc")}
           />
           <div className="room-navigation">
-            {(!pdf || book.object) && (
-              <Tool
-                className="room-tool"
-                label={epub ? t("reader.prev") : t("reader.pageUp")}
-                symbol="previous"
-                onClick={() => engine.current?.turn(-1)}
-              />
-            )}
-            {epub ? (
-              <div className="chapter-position">
-                <span>
-                  {index >= 0
-                    ? t("reader.chapter", { number: index + 1 })
-                    : "—"}{" "}
-                  <i>/ {count}</i>
-                </span>
-                {count > 1 && (
-                  <Slider
-                    aria-label={t("reader.selectChapter")}
-                    value={[index + 1]}
-                    min={index < 0 ? 0 : 1}
-                    max={count}
-                    onValueChange={([chapter]) => {
-                      const item = toc[chapter - 1];
-                      if (item) go(item.target);
-                    }}
-                  />
-                )}
-              </div>
-            ) : pdf ? (
-              <button
-                className="pdf-fit"
-                aria-label={t("reader.fit")}
-                aria-pressed={wide}
-                onClick={() => setWide((v) => !v)}
-              >
-                {pdfLabel} · {wide ? t("reader.fitWidth") : t("reader.fitPage")}{" "}
-                <Icon name={wide ? "fitWidth" : "fitPage"} />
-              </button>
-            ) : (
-              <span className="document-position">Markdown</span>
-            )}
-            {(!pdf || book.object) && (
-              <Tool
-                className="room-tool"
-                label={epub ? t("reader.next") : t("reader.pageDown")}
-                symbol="next"
-                onClick={() => engine.current?.turn(1)}
-              />
-            )}
+            <Tool
+              className="room-tool"
+              label={t("reader.prev")}
+              symbol="previous"
+              onClick={() => engine.current?.turn(-1)}
+            />
+            <span className="page-position">{pageLabel}</span>
+            <Tool
+              className="room-tool"
+              label={t("reader.next")}
+              symbol="next"
+              onClick={() => engine.current?.turn(1)}
+            />
           </div>
           <Tool
             className="room-tool"
@@ -442,6 +389,17 @@ export default function Reader({
                       ))}
                     </div>
                   </div>
+                )}
+                {pdf && (
+                  <button
+                    className="pdf-fit"
+                    aria-label={t("reader.fit")}
+                    aria-pressed={wide}
+                    onClick={() => setWide((v) => !v)}
+                  >
+                    {wide ? t("reader.fitWidth") : t("reader.fitPage")}
+                    <Icon name={wide ? "fitWidth" : "fitPage"} />
+                  </button>
                 )}
                 {!pdf && (
                   <TypeControls
@@ -503,18 +461,21 @@ export default function Reader({
                     aria-label={t("reader.search")}
                     placeholder={t("reader.search")}
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      engine.current?.clearHighlight();
+                      setQuery(e.target.value);
+                    }}
                   />
                 </label>
-                <div id="book-results" className="contents-list">
+                <div id="book-results" aria-busy={searching}>
                   {searching ? (
                     <p>{t("reader.searching")}</p>
                   ) : results.length ? (
-                    results.map((hit, i) => (
-                      <button key={i} onClick={() => go(hit.target)}>
-                        {hit.label}
-                      </button>
-                    ))
+                    <SearchResults
+                      key={query}
+                      hits={results}
+                      choose={(hit) => go(hit.target, hit)}
+                    />
                   ) : (
                     query && <p>{t("reader.noMatches")}</p>
                   )}

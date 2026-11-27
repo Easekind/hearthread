@@ -1,3 +1,4 @@
+import type { ReaderEngine } from "./engine";
 import { t } from "../i18n";
 interface Toc {
   label: string;
@@ -7,8 +8,15 @@ interface Toc {
 interface Section {
   id: string;
   linear?: string;
+  createDocument?(): Document | Promise<Document>;
 }
-interface Epub {
+export interface Publication {
+  textPosition?: {
+    doc: Document;
+    fractionAt(range: Range): number;
+    rangeAt(fraction: number): Range | undefined;
+  };
+  search?: ReaderEngine["search"];
   rendition?: { layout?: string; spread?: string };
   metadata: {
     title?: string;
@@ -18,7 +26,10 @@ interface Epub {
   toc?: Toc[];
   getCover?(): Promise<Blob | null>;
   destroy?(): void;
-  transformTarget: EventTarget;
+  resolveHref?(
+    href: string,
+  ): { index: number; anchor(doc: Document): Element | number | null } | null;
+  transformTarget?: EventTarget;
 }
 export interface Relocation {
   fraction: number;
@@ -28,10 +39,15 @@ export interface Relocation {
   tocItem?: Toc;
 }
 export interface EpubView extends HTMLElement {
-  open(b: Epub): Promise<void>;
-  init(o: { lastLocation?: string; showTextStart: boolean }): Promise<void>;
+  language: { canonical?: string; direction?: string; isCJK: boolean };
+  open(b: Publication): Promise<void>;
+  init(o: {
+    lastLocation?: string | number;
+    showTextStart: boolean;
+  }): Promise<void>;
   close(): void;
   goTo(t: string | number): Promise<void>;
+  getCFI(index: number, range?: Range): string;
   resolveCFI(cfi: string): {
     index: number;
     anchor(doc: Document): Range | null;
@@ -40,28 +56,26 @@ export interface EpubView extends HTMLElement {
   prev(): Promise<void>;
   next(): Promise<void>;
   renderer: HTMLElement & {
+    getPageRange?(
+      fontKey?: string,
+      prepare?: (doc: Document) => void,
+    ): Promise<number[] | undefined>;
+    readonly columnCount: number;
+    readonly rtl: boolean;
     readonly scrollProp?: "scrollLeft" | "scrollTop";
+    getContents(): { index: number; doc: Document }[];
     setStyles?(css: string): void;
     setAttribute(key: string, value: string): void;
   };
   lastLocation?: Relocation;
-  search(o: { query: string }): AsyncGenerator<
-    | {
-        subitems?: {
-          cfi: string;
-          excerpt: { pre: string; match: string; post: string };
-        }[];
-      }
-    | string
-  >;
-  clearSearch(): void;
 }
 const modulePath = new URL("/foliate/view.js", location.href).href;
-export async function openEpub(file: File): Promise<Epub> {
+export const loadView = () => import(/* @vite-ignore */ modulePath);
+export async function openEpub(file: File): Promise<Publication> {
   const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
   if (head[0] !== 80 || head[1] !== 75) throw new Error(t("error.invalidEpub"));
-  const { makeBook } = await import(/* @vite-ignore */ modulePath);
-  const book: Epub = await makeBook(file);
+  const { makeBook } = await loadView();
+  const book: Publication = await makeBook(file);
   if (!book.sections?.length || !book.transformTarget)
     throw new Error(t("error.noChapters"));
   book.transformTarget.addEventListener("load", (e) => {

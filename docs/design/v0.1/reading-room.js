@@ -1,4 +1,50 @@
+function readerSpecimen(book,isPdf) {
+  return isPdf?`<div class="pdf-stage"><article class="pdf-page"><h1>The Seven Lamps of Architecture</h1><p>John Ruskin</p><h2>Introductory</h2><p>Some years ago, in conversation with an artist whose works, perhaps, alone, in the present day, unite perfection of drawing with resplendence of color, the writer made some inquiry respecting the general means by which this latter quality was most easily to be attained.</p></article></div>`:`<article class="reading-content markdown-content"><h1>${esc(book.title)}</h1><h2>学而篇</h2><p>子曰：“学而时习之，不亦说乎？有朋自远方来，不亦乐乎？人不知而不愠，不亦君子乎？”</p><p>有子曰：“其为人也孝悌，而好犯上者，鲜矣。”</p><h2>为政篇</h2><p>子曰：“为政以德，譬如北辰，居其所而众星共之。”</p></article>`;
+}
 const pageColors = {light:'素白',paper:'暖纸',dark:'墨夜',system:'跟随系统'};
+// The standalone edition uses the publication paginator for its sample chapters.
+customElements.define('edition-pages', class extends HTMLElement {
+  connectedCallback() {
+    const pager=this.pager=document.createElement('foliate-paginator');
+    this.append(pager);
+    const dual=spreadViewport.matches && preferredLayout==='double';
+    const width=this.clientWidth;
+    const margin=dual?Math.min(48,Math.round(width*.035)):48;
+    pager.setAttribute('max-inline-size',(dual?Math.min(680,width-1):680)+'px');
+    pager.setAttribute('max-column-count',dual?'2':'1');
+    pager.setAttribute('margin-left',margin+'px');
+    pager.setAttribute('margin-right',margin+'px');
+    pager.addEventListener('load',({detail:{doc}})=>{
+      doc.addEventListener('click',()=>{if(doc.getSelection()?.isCollapsed)setReadingTools(focusMode)});
+      doc.addEventListener('keydown',e=>{
+        if(['ArrowLeft','ArrowRight','Enter','Escape'].includes(e.key)){
+          e.preventDefault();
+          document.querySelector('.reading-layer').dispatchEvent(new KeyboardEvent('keydown',{key:e.key,bubbles:true}));
+        }
+      });
+    });
+    pager.addEventListener('relocate',({detail})=>{
+      if(!this.isConnected)return;
+      chapter=detail.index+1;
+      chapterMemory.set(activeBook,chapter);
+      void pager.getPageRange().then(range=>{
+        const label=this.closest('.reader')?.querySelector('.page-position');
+        if(label && range)label.textContent='第 '+range.join('–')+' 页';
+      });
+    });
+    pager.open({sections:chapterNames.map((title,i)=>({
+      id:String(i),load:()=>'about:blank',
+      loadContent:()=>'<html xmlns="http://www.w3.org/1999/xhtml"><head><title>'+esc(title)+'</title></head><body><h1>'+esc(title)+'</h1>'+prose[i].map(p=>'<p>'+esc(p)+'</p>').join('')+'</body></html>'
+    }))});
+    this.applyType();
+    void pager.goTo({index:chapter-1});
+  }
+  applyType() {
+    const css=getComputedStyle(this.closest('.reader'));
+    this.pager.setStyles('::highlight(found-passage){background:#f2c56e;color:#302214}html,body{color:'+css.getPropertyValue('--reader-ink')+'!important;background:'+css.getPropertyValue('--reader-paper')+'!important}body,p,li,blockquote{font-family:'+readerFonts()+'!important;font-size:'+fontSize+'px!important;line-height:'+leading+'!important}');
+  }
+  disconnectedCallback(){this.pager.destroy()}
+});
 const spreadViewport = matchMedia('(min-width: 720px) and (min-height: 500px)');
 let preferredLayout = 'single';
 let sampleFontImported = false;
@@ -41,10 +87,11 @@ function paintType() {
   surface.style.setProperty('--reading-face',readerFonts());
   surface.style.setProperty('--reader-size',fontSize+'px');
   surface.style.setProperty('--reader-leading',leading);
+  surface.querySelector('edition-pages')?.applyType();
 }
 document.addEventListener('input',event=>{
   const input=event.target;
-  if (input.matches('.chapter-position input,.type-slider input')) {
+  if (input.matches('.type-slider input')) {
     input.style.setProperty('--range-fill',rangeFill(input.valueAsNumber,Number(input.min),Number(input.max)));
   }
   if (!['type-size','type-leading','font-category','reading-font'].includes(input.id)) return;
@@ -67,19 +114,15 @@ function reader() {
   const pageLayout=spreadViewport.matches?preferredLayout:'single';
 
   const paperStyle=`--reader-size:${fontSize}px;--reader-leading:${leading};--reading-face:${readerFonts()}`;
-  const content=readerSpecimen(book,pdf,!epub&&!pdf);
+  const content=epub ? '<edition-pages class="book-surface"></edition-pages>' : readerSpecimen(book,pdf,!pdf);
   const tool=(action,symbol,label)=>`<button type="button" class="room-tool" data-action="${action}" aria-label="${label}" title="${label}" ${['toc','reader-search','typography'].includes(action)?`aria-expanded="${readerPanel===({toc:'toc','reader-search':'search',typography:'type'}[action])}"`:''}>${symbol==='type'?'<span class="type-symbol">Aa</span>':icon(symbol)}</button>`;
-  const navigation=epub?`<button class="room-tool" data-action="prev" aria-label="${pageLayout==='double'?'上一页':'上一章'}" ${pageLayout==='single'&&chapter===1?'disabled':''}>${icon('previous')}</button>
-    <label class="chapter-position"><span>第 ${chapter} 章 <i>/ ${chapterNames.length}</i></span>${readingRange('chapter-progress','选择章节',1,chapterNames.length,1,chapter)}</label>
-    <button class="room-tool" data-action="next" aria-label="${pageLayout==='double'?'下一页':'下一章'}" ${pageLayout==='single'&&chapter===chapterNames.length?'disabled':''}>${icon('next')}</button>`
-    :pdf?`<button class="pdf-fit" data-action="pdf-scale" aria-label="切换 PDF 显示宽度" aria-pressed="${pdfWide}">第 3 页 · ${pdfWide?'适合宽度':'适合页面'} ${icon(pdfWide?'fitWidth':'fitPage')}</button>`
-    :`${tool('prev','previous','向上翻页')}<span class="document-position">Markdown</span>${tool('next','next','向下翻页')}`;
+  const navigation=tool('prev','previous','上一页')+'<span class="page-position">第 1 页</span>'+tool('next','next','下一页');
   return `<main class="reader reading-room ${focusMode?'is-focus':''}" data-paper="${resolvedPaper()}" data-pdf-wide="${pdfWide}" data-page-layout="${pageLayout}" style="${paperStyle}">
     <button class="reading-tools-access" data-action="show-reading-tools" ${focusMode?'':'hidden'}>显示阅读工具</button>
     <header class="room-head" ${focusMode?'inert':''}><button class="room-back" aria-label="返回书库" data-route="library">${icon('back')}<span>书库</span></button>
     <div class="room-identity"><strong>${esc(book.title)}</strong><small>${esc(book.author.replace(' / 示例文档',''))}</small></div>
     <div class="room-actions">${tool('reader-search','search','书内搜索')}</div></header>
-    <div class="text-document" data-layout="${pageLayout}">${content}</div>
+    ${epub?content:`<div class="text-document" data-format="${route}" data-layout="${pageLayout}">${content}</div>`}
     <footer class="room-dock" aria-label="阅读工具" ${focusMode?'inert':''}>${tool('toc','contents','目录')}<div class="room-navigation">${navigation}</div>
     ${pdf?tool('typography','sun','阅读显示'):tool('typography','type','阅读排版')}</footer>
     ${readerPanel?readingPanel():''}</main>`;
@@ -91,7 +134,7 @@ function readingPanel() {
   let body;
   const layoutChoices=['single','double'].map((value,i)=>`<button type="button" data-action="layout-${value}" aria-pressed="${preferredLayout===value}">${['单屏','双屏'][i]}</button>`).join('');
   const layoutRow=spreadViewport.matches?`<div class="face-row layout-row" role="group" aria-label="页面布局"><span>页面布局</span><div class="layout-choices">${layoutChoices}</div></div>`:'';
-  if (readerPanel==='type') body=`${layoutRow}${route==='pdf'?'':fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
+  if (readerPanel==='type') body=`${layoutRow}${route==='pdf'?`<button class="pdf-fit" data-action="pdf-scale" aria-label="切换 PDF 显示宽度" aria-pressed="${pdfWide}">${pdfWide?'适合宽度':'适合页面'} ${icon(pdfWide?'fitWidth':'fitPage')}</button>`:fontControls()}<div class="paper-choices">${paperChoices(paper,'paper')}</div>
     ${route==='pdf'?'':'<button class="reset-reading" data-action="reset-type">恢复默认排版</button>'}`;
   if (readerPanel==='toc') {
     const headings=route==='reader'?chapterNames:specimenSections().map(h=>h.textContent);
@@ -110,11 +153,17 @@ function documentResults(q) {
   const rows=route==='reader'?prose.flatMap((paragraphs,section)=>paragraphs.map((text,index)=>({text,section,index})))
     :[...document.querySelectorAll(documentPassages)].map((node,index)=>({text:node.textContent,index}));
   const term=q.trim().toLowerCase();
-  const found=rows.filter(row=>row.text.toLowerCase().includes(term));
-  return `<p class="match-count" role="status">${found.length?'找到 '+found.length+' 个段落':'未找到匹配段落'}</p>`+found.map(row=>{
-    const start=row.text.toLowerCase().indexOf(term),end=start+term.length;
-    return `<button class="passage-match" data-paragraph="${row.index}" ${row.section===undefined?'':`data-result-chapter="${row.section+1}"`}>${row.section===undefined?'':`<small>${esc(chapterNames[row.section])}</small>`}${esc(row.text.slice(0,start))}<mark>${esc(row.text.slice(start,end))}</mark>${esc(row.text.slice(end))}</button>`;
-  }).join('');
+  const groups=new Map();
+  for(const row of rows) {
+    const label=row.section===undefined?(route==='pdf'?'第 1 页':document.querySelectorAll(documentPassages)[row.index]?.previousElementSibling?.closest('h2')?.textContent || '正文'):chapterNames[row.section];
+    const text=row.text.toLowerCase();
+    for(let start=text.indexOf(term);start!==-1;start=text.indexOf(term,start+term.length)){
+      if(!groups.has(label))groups.set(label,[]);
+      const end=start+term.length;
+      groups.get(label).push(`<button class="search-hit" data-paragraph="${row.index}" data-offset="${start}" ${row.section===undefined?'':`data-result-chapter="${row.section+1}"`}>${start>48?'…':''}${esc(row.text.slice(Math.max(0,start-48),start))}<mark>${esc(row.text.slice(start,end))}</mark>${esc(row.text.slice(end,end+48))}${end+48<row.text.length?'…':''}</button>`);
+    }
+  }
+  return [...groups].map(([title,hits])=>`<details class="search-group" open><summary><span>${esc(title)}</span><small>${hits.length}</small></summary><div>${hits.join('')}</div></details>`).join('') || '<p role="status">未找到匹配段落</p>';
 }
 function applyReadingPaper(value) {
   paper=value;
@@ -164,13 +213,23 @@ document.addEventListener('click',event=>{
   const row=event.target.closest('[data-section],[data-paragraph]');
   if (!row) return;
   const section=row.hasAttribute('data-section'), index=Number(section?row.dataset.section:row.dataset.paragraph);
-  if (route==='reader') goToChapter(section?index+1:Number(row.dataset.resultChapter));
-  else toggleReadingPanel('');
-  if (section && route==='reader') return;
-  const selector=section?'article h2':route==='reader'?'.reading-content p':documentPassages;
+  if (route==='reader') {
+    toggleReadingPanel('');
+    const pager=document.querySelector('edition-pages foliate-paginator');
+    const anchor=section?0:doc=>{
+      const passage=doc.querySelectorAll('p')[index];
+      if(passage)highlightPassage(passage,Number(row.dataset.offset));
+      return passage;
+    };
+    void pager.goTo({index:section?index:Number(row.dataset.resultChapter)-1,anchor});
+    document.querySelector('.reading-layer').focus({preventScroll:true});
+    return;
+  }
+  toggleReadingPanel('');
+  const selector=section?'article h2':documentPassages;
   const destination=document.querySelector('.reading-room').querySelectorAll(selector)[index];
   destination?.scrollIntoView({block:'center'});
-  if (!section && destination) highlightPassage(destination);
+  if (!section && destination) highlightPassage(destination,Number(row.dataset.offset));
   document.querySelector('.reading-layer').focus({preventScroll:true});
 });
 function setReadingTools(visible) {
@@ -223,14 +282,10 @@ document.addEventListener('keydown',event=>{
     setReadingTools(focusMode);
   }
 });
-document.addEventListener('input',event=>{
-  if(event.target.id==='chapter-progress') event.target.previousElementSibling.innerHTML='第 '+Number(event.target.value)+' 章 <i>/ '+chapterNames.length+'</i>';
-});
-
-function highlightPassage(paragraph) {
+function highlightPassage(paragraph,start) {
   if (!globalThis.CSS?.highlights) return;
   const term=passageQuery.trim().toLowerCase();
-  const start=paragraph.textContent.toLowerCase().indexOf(term);
+
   if (!term || start<0) return;
   const walker=document.createTreeWalker(paragraph,NodeFilter.SHOW_TEXT);
   const range=new Range();
@@ -241,7 +296,7 @@ function highlightPassage(paragraph) {
     if (offset<=start && start<end) range.setStart(node,start-offset);
     if (start+term.length<=end) {
       range.setEnd(node,start+term.length-offset);
-      CSS.highlights.set('found-passage',new Highlight(range));
+      paragraph.ownerDocument.defaultView.CSS.highlights.set('found-passage',new Highlight(range));
       return;
     }
     offset=end;
