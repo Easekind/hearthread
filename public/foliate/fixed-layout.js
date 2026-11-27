@@ -1606,7 +1606,7 @@ export class FixedLayout extends HTMLElement {
         if (this.#index === -1) return
         const section = this.book.sections[this.index]
         this.#spread(spreadMode)
-        const { index } = this.getSpreadOf(section)
+        const { index, side } = this.getSpreadOf(section)
         this.#index = -1
         for (const frames of this.#prerenderedSpreads.values()) {
             if (frames.center) {
@@ -1619,7 +1619,7 @@ export class FixedLayout extends HTMLElement {
         this.#prerenderedSpreads.clear()
         this.#spreadAccessTime.clear()
         this.#overlayers.clear()
-        this.goToSpread(index, this.rtl ? 'right' : 'left', 'page')
+        this.goToSpread(index, side, 'page')
     }
     // A section can find out as it loads that it is a spread of its own: a
     // streamed comic measures a page when its image arrives, and a wide one

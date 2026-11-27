@@ -1,6 +1,9 @@
 import fs from "node:fs";
 const read = (file) => fs.readFileSync(new URL(file, import.meta.url), "utf8");
-let html = read("../v0.8/index.html");
+let html = read("../v0.8/index.html").replace(
+  "<style>",
+  '<script src="publication-paginator.js"></script>\n<style>',
+);
 function replace(original, replacement) {
   if (!html.includes(original))
     throw Error("Missing prototype source: " + original);
@@ -419,4 +422,28 @@ replace(
   "</script></body>",
   read("sheet.js") + "\n" + read("reading-actions.js") + "\n</script></body>",
 );
+// The current library and reading preview share their offline text source.
+html = html.replace(
+  '<span class="dock-chapter"> / ${esc(b.chapter)}</span>',
+  "${b.chapter?`<span class=\"dock-chapter\"> / ${esc(b.chapter)}</span>` : ''}",
+);
+html = html
+  .replace(/const originalBooks=\[[\s\S]*?(?=let books=)/, "")
+  .replace(/const chapterNames=\[[\s\S]*?(?=const jacketArt=)/, "")
+  .replace(
+    '<script src="publication-paginator.js">',
+    '<script src="sample-books.js"></script>\n<script src="publication-paginator.js">',
+  )
+  .replace("['THE ARCHITECTURE']", "['THE SEVEN LAMPS']")
+  .replace("['of Reading'],38", "['of Architecture'],30")
+  .replace("['SPACE IS PART OF THE SENTENCE.']", "['JOHN RUSKIN']")
+  .replace("['NOTES FROM']", "['THE ANALECTS']")
+  .replace("['the mountains'],29", "['论语'],39,'reading'")
+  .replace(
+    "let readOrder=12;books.forEach((b,i)=>{b.lastReadOrder=b.progress?12-i:0});",
+    "let readOrder=books.length;books.forEach(b=>{b.lastReadOrder=0});",
+  );
+const oldPreview = html.indexOf("function readerSpecimen(b,isPdf,isMd)");
+if (oldPreview >= 0)
+  html = html.slice(0, oldPreview) + html.slice(html.indexOf("\n", oldPreview));
 fs.writeFileSync(new URL("index.html", import.meta.url), html);

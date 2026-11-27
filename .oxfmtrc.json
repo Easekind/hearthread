@@ -10,8 +10,7 @@
     "src-tauri/gen/",
     "src/library/edition.json",
     "src/library/jackets.json",
-    "src/reader/chapters.json",
-    "src/reader/pdf-sample.html",
+    "scripts/samples/architecture/index.html",
     "src/ui/icons.json",
     "docs/design/v0.1/*.{html,css,js}"
   ]

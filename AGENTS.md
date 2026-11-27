@@ -28,15 +28,15 @@
 
 - 页面布局、字体、颜色、间距和交互状态须与设计稿一致。修复视觉偏差时按现有稿修改应用；产品设计确需变更时，先更新交互稿，再实现并对照桌面与手机尺寸验收。
 - 视觉对照以 `docs/design/v0.1/index.html` 的交互稿为准。书墙在 `src/library/`，通用控件和设置在 `src/ui/`。从设计稿提取的 `public/design/edition.css` 作为静态文件加载。设计源稿变动后，用 `node scripts/design-assets.mjs` 重新提取资源。
-- 修改阅读器先看 `src/reader/Reader.tsx` 和同目录的 `engine.ts`。内置样章有独立的渲染路径。调整分页、搜索或续读时，导入对应格式的文件验证。
+- 修改阅读器先看 `src/reader/Reader.tsx` 和同目录的 `engine.ts`。内置书与导入书读取相同格式的原件，共用阅读器。调整分页、搜索或续读时，导入对应格式的文件验证。
 - 阅读器功能难以实现、渲染卡顿或出现性能瓶颈时，优先查阅工作区内成熟阅读器对应功能的架构和实现。EPUB 使用同级目录的优化版 `../foliate-js`；升级内置引擎时，运行 `node scripts/vendor-epub.mjs ../foliate-js`，检查生成的改动和 `public/foliate/REVISION` 中的提交号，清理上游注释中的竞品举例和具名工单引用。
-- `src/reader/Pdf.tsx` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。单屏渲染当前页，双屏渲染当前跨页，换页时取消旧任务。Markdown 使用 `react-markdown`，禁用原始 HTML。
+- `src/reader/pdf.ts` 中的 PDF.js 主模块和 Worker 使用同版本的 legacy 构建以兼容 WKWebView。Vite 会复制离线所需的字体、CMap 和解码器。单屏渲染当前页，双屏渲染当前跨页，换页或重绘时取消旧任务，关闭书籍时销毁 Worker。Markdown 使用 `react-markdown`，禁用原始 HTML。
 
 ## 存储和阅读位置
 
 文件和书目操作统一走 `src/storage/files.ts` 中的 `LibraryFiles`。原生应用把原件、资源和 SQLite 数据库保存在本地书库目录，原生适配器调用 `src-tauri/src/store.rs`，浏览器使用独立的 IndexedDB 书库。业务层只持有逻辑记录键和文件的 SHA-256 键，由适配器解析存储位置。读取结束后，调用读取句柄的 `release()` 释放资源。后续接入 S3 时沿用同一接口及其批量提交和冲突语义；当前版本只实现本地读写。
 
-先写入不可变对象，再提交书目。把相关变更连同预期修订号放进同一批次，冲突时整批回滚。共享书目保存在 `books/<id>` 下，阅读位置和偏好保存在 `profiles/local/` 下。重新打开文件时，EPUB 按 CFI 恢复，PDF 按从 1 开始的页码恢复，Markdown 按相对滚动位置恢复。
+先写入不可变对象，再提交书目。把相关变更连同预期修订号放进同一批次，冲突时整批回滚。共享书目保存在 `books/<id>` 下，阅读位置和偏好保存在 `profiles/local/` 下。重新打开文件时，EPUB 按 CFI 恢复，PDF 按从 1 开始的页码恢复，Markdown 按正文中的相对位置恢复。
 
 书库迁移使用 `src/storage/backup.ts` 定义的带版本号 ZIP 格式。恢复时先校验对象摘要，再提交记录。原生 SQLite 数据库及其活动 WAL 文件由本地进程管理。
 

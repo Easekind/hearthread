@@ -28,78 +28,13 @@
   height: 100%;
   object-fit: cover;
 }
-.epub-surface {
-  height: 100dvh;
-  width: 100%;
-  padding-block: clamp(30px, 7vh, 64px);
-}
-.epub-surface foliate-view {
+.book-surface foliate-view {
   display: block;
   width: 100%;
   height: 100%;
 }
-.pdf-document {
-  padding: 18px 0 6rem;
-  min-height: 100dvh;
-  text-align: center;
-  background: var(--room-control);
-}
-.reader[data-page-layout="double"] .pdf-document {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: clamp(8px, 2vw, 24px);
-  padding-inline: clamp(8px, 2vw, 24px);
-}
-.pdf-sheet {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  line-height: 0;
-  background: white;
-  box-shadow: var(--surface-shadow);
-}
-.pdf-sheet canvas {
-  max-width: 100%;
-  display: block;
-}
-.pdf-sheet .textLayer {
-  position: absolute;
-  inset: 0;
-  line-height: 1;
-  overflow: clip;
-  text-align: initial;
-  text-size-adjust: none;
-  transform-origin: 0 0;
-  forced-color-adjust: none;
-  --min-font-size: 1;
-  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
-  --min-font-size-inv: calc(1 / var(--min-font-size));
-}
-.pdf-sheet .textLayer :is(span, br) {
-  color: transparent;
-  position: absolute;
-  white-space: pre;
-  cursor: text;
-  transform-origin: 0 0;
-}
-.pdf-sheet .textLayer > :not(.markedContent),
-.pdf-sheet .textLayer .markedContent span:not(.markedContent) {
-  font-size: calc(var(--text-scale-factor) * var(--font-height));
-  transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1))
-    scale(var(--min-font-size-inv));
-}
-.reader[data-paper="dark"] .pdf-sheet canvas {
+.reader[data-paper="dark"] .pdf-surface foliate-view::part(filter) {
   filter: invert(0.87) hue-rotate(180deg);
-}
-.markdown-content {
-  overflow-wrap: anywhere;
-}
-.markdown-content pre {
-  overflow: auto;
-}
-.markdown-content img {
-  max-width: 100%;
 }
 .dialog-content [role="alert"] {
   color: var(--brand-thread);

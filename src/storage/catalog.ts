@@ -19,7 +19,7 @@ const seeded: Book[] = edition.map((b, i) => ({
   id: String(b.id),
   type: b.type as Format,
   added: i + 1,
-  readAt: b.progress ? 12 - i : 0,
+  readAt: 0,
   filename: b.title + "." + b.type.toLowerCase(),
 }));
 export async function loadCatalog() {
@@ -33,7 +33,7 @@ export async function loadCatalog() {
     versions.set(row.key, row.version);
     values.set(row.key, row.value);
     const value = JSON.parse(row.value);
-    if (row.key.startsWith("books/"))
+    if (row.key.startsWith("books/") && (value.object || books.has(value.id)))
       books.set(value.id, {
         readAt: 0,
         chapter: "",

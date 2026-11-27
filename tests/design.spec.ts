@@ -1,4 +1,5 @@
 import { test, expect } from "./chinese-library";
+import { columnCount } from "./reader-surface";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -11,7 +12,16 @@ for (const [width, height] of [
 ])
   for (const surface of width === 744
     ? ["spread"]
-    : ["library", "settings", "language", "typography", "read-1", "spread"]) {
+    : [
+        "library",
+        "settings",
+        "language",
+        "typography",
+        "read-1",
+        "spread",
+        "toolbar",
+        "search",
+      ]) {
     test(surface + " pixels " + width, async ({ page }, info) => {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -33,10 +43,32 @@ for (const [width, height] of [
         await page.goto(
           url +
             "#" +
-            (section ? "settings" : surface === "spread" ? "read-1" : surface),
+            (section
+              ? "settings"
+              : ["spread", "toolbar", "search"].includes(surface)
+                ? "read-1"
+                : surface),
         );
+        if (surface === "toolbar" || surface === "search") {
+          await page.locator(".reading-layer").focus();
+          await page.keyboard.press("Enter");
+          await expect(page.locator(".page-position")).toHaveText("第 1 页");
+        }
+        if (surface === "search") {
+          await page.getByRole("button", { name: "书内搜索" }).click();
+          await page.getByLabel("搜索本书").fill("pond");
+          await expect(page.locator(".search-group").nth(1)).toBeVisible();
+          const result = page.locator(".search-hit").first();
+          await expect(result).toHaveCSS("white-space", "normal");
+          expect(
+            await result.evaluate((el) => el.scrollWidth <= el.clientWidth),
+          ).toBe(true);
+          await page.getByLabel("搜索本书").blur();
+          await page.mouse.move(0, 0);
+        }
         if (surface === "spread") {
-          await page.locator(".reading-content h1").click();
+          await page.locator(".reading-layer").focus();
+          await page.keyboard.press("Enter");
           await page
             .getByRole("button", { name: "阅读排版", exact: true })
             .click();
@@ -50,11 +82,11 @@ for (const [width, height] of [
               .click();
           }
           await page.getByRole("button", { name: "关闭阅读排版" }).click();
-          await page.locator(".reading-content h1").click();
-          await expect(page.locator(".reading-content")).toHaveCSS(
-            "column-count",
-            width === 390 ? "auto" : "2",
-          );
+          await page.locator(".reading-layer").focus();
+          await page.keyboard.press("Enter");
+          await expect
+            .poll(() => columnCount(page))
+            .toBe(width === 390 ? 1 : 2);
           await page.mouse.move(0, 0);
         }
         if (section) {
@@ -74,7 +106,7 @@ for (const [width, height] of [
               ? ".preferences"
               : surface === "library"
                 ? ".wall-select"
-                : ".reading-content h1";
+                : "foliate-paginator iframe";
         await expect(page.locator(target).first()).toBeVisible();
         await page.waitForLoadState("networkidle");
         await page.evaluate(async () => {
@@ -85,9 +117,13 @@ for (const [width, height] of [
         const capture =
           surface === "typography"
             ? page.locator(".type-specimen")
-            : surface === "language"
-              ? page.locator(".pref-group")
-              : page;
+            : surface === "search"
+              ? page.locator(".panel-search")
+              : surface === "toolbar"
+                ? page.locator(".room-dock")
+                : surface === "language"
+                  ? page.locator(".pref-group")
+                  : page;
         const buffer = await capture.screenshot({
           path: info.outputPath(name + ".png"),
           animations: "disabled",

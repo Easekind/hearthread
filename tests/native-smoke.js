@@ -8,7 +8,7 @@
   window.addEventListener("unhandledrejection", (e) => note(e.reason));
   // WKWebView suppresses animation frames when the macOS desktop session is hidden.
   // Keep PDF.js's real canvas renderer scheduled in this test-only executable.
-  if (document.hidden) {
+  {
     const request = window.requestAnimationFrame.bind(window),
       cancel = window.cancelAnimationFrame.bind(window);
     window.requestAnimationFrame = (cb) =>
@@ -33,9 +33,42 @@
       if (value) return value;
       await sleep(50);
     }
-    throw Error(label + " " + document.body.innerText.slice(-400));
+    throw Error(
+      label +
+        " " +
+        JSON.stringify({
+          hidden: document.hidden,
+          renderer: renderer()?.localName,
+          pages: pages().map(({ index, doc }) => [
+            index,
+            doc.readyState,
+            doc.querySelector("canvas")?.width,
+          ]),
+          status: document.body.innerText.slice(-400),
+        }),
+    );
   }
   const query = (s) => document.querySelector(s);
+  const renderer = () => query("foliate-view")?.renderer;
+  const pages = () =>
+    (renderer()?.getContents() ?? []).filter(
+      ({ doc, index }) => doc && index != null,
+    );
+  const content = (selector) => pages()[0]?.doc.querySelector(selector);
+  async function wheelTo(deltaY, label) {
+    const doc = pages()[0].doc;
+    doc.dispatchEvent(
+      new doc.defaultView.WheelEvent("wheel", {
+        deltaY,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    await until(
+      () => query(".page-position")?.textContent === label,
+      "wheel to " + label,
+    );
+  }
   const button = (name, owner = document) =>
     [...owner.querySelectorAll("button")].find(
       (b) => b.textContent.trim() === name && !b.disabled,
@@ -121,11 +154,11 @@
       await click('[data-focus-book="' + digest + '"]');
       await click(".read-button");
       await until(
-        () => query(".markdown-content")?.innerText.includes("原生验证"),
+        () => content(".markdown-content")?.innerText.includes("原生验证"),
         "reopen Markdown",
       );
       await until(
-        () => query(".text-document[data-layout=double]")?.scrollLeft > 0,
+        () => renderer()?.columnCount === 2 && renderer()?.page > 0,
         "resume two-page Markdown",
       );
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
@@ -180,18 +213,52 @@
       await note("opening " + book.type);
       await click('[data-focus-book="' + book.id + '"]');
       await click(".read-button");
-      if (book.type === "EPUB")
+      if (book.type === "EPUB") {
         await until(
-          () => query(".chapter-position span")?.textContent.includes("/ 4"),
+          () => query(".page-position")?.textContent === "第 1 页",
           "EPUB relocate",
         );
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+        await click('.room-dock button[aria-label="阅读排版"]');
+        button("双屏").click();
+        await until(() => renderer()?.columnCount === 2, "two-page EPUB");
+        await click('button[aria-label="关闭阅读排版"]');
+        await wheelTo(5, "第 3–4 页");
+        await wheelTo(-3, "第 1–2 页");
+        await click('.room-dock button[aria-label="目录"]');
+        await click(".contents-list button:nth-child(3)");
+        await until(
+          () => pages().some(({ index }) => index === 2),
+          "open Reading chapter",
+        );
+        await query("foliate-view").next();
+        await query("foliate-view").prev();
+        for (let i = 0; i < 2; i++) {
+          await click('.room-dock button[aria-label="目录"]');
+          await until(
+            () =>
+              query(".contents-list [aria-current=location] span")
+                ?.textContent === "阅读",
+            "selected EPUB chapter after returning to its opening spread",
+          );
+          await click('button[aria-label="关闭目录"]');
+        }
+        await click('.room-dock button[aria-label="阅读排版"]');
+        button("单屏").click();
+        await click('button[aria-label="关闭阅读排版"]');
+      }
       if (book.type === "PDF") {
         await until(
           () =>
-            query(".textLayer")?.textContent.includes("Architecture") &&
-            query("canvas")
+            content(".textLayer")?.textContent.includes("Architecture") &&
+            content("canvas")
               ?.getContext("2d")
-              .getImageData(0, 0, query("canvas").width, query("canvas").height)
+              .getImageData(
+                0,
+                0,
+                content("canvas").width,
+                content("canvas").height,
+              )
               .data.some((value, i) => i % 4 === 0 && value < 100 && value > 0),
           "PDF text and raster render",
         );
@@ -200,38 +267,52 @@
         button("双屏").click();
         await until(
           () =>
-            document.querySelectorAll(".textLayer")[1]?.textContent.length > 0,
+            pages()[1]?.doc.querySelector(".textLayer")?.textContent.length > 0,
           "second PDF text layer",
         );
-        const sheets = [...document.querySelectorAll(".pdf-sheet canvas")].map(
-          (canvas) => canvas.getBoundingClientRect(),
+        const sheets = pages().map(({ doc }) =>
+          doc.defaultView.frameElement.getBoundingClientRect(),
         );
-        if (sheets[1].left <= sheets[0].right) throw Error("PDF pages overlap");
+        if (sheets[1].left < sheets[0].right - 1)
+          throw Error("PDF pages overlap");
         button("单屏").click();
         await click('button[aria-label="关闭阅读显示"]');
+        await wheelTo(5, "第 2 页");
+        await until(
+          () => pages()[0]?.index === 1 && content(".textLayer")?.textContent,
+          "read PDF page two",
+        );
+        await click('button[aria-label="返回书库"]');
+        await until(() => !query(".reading-layer"), "close PDF");
+        await click('[data-focus-book="' + book.id + '"]');
+        await click(".read-button");
+        await until(
+          () => pages()[0]?.index === 1 && content(".textLayer")?.textContent,
+          "resume PDF page two",
+        );
+        log.push("PDF reopened on its second original page");
       }
       if (book.type === "MD") {
-        await until(() => query(".markdown-content h1"), "Markdown render");
+        await until(() => content(".markdown-content h1"), "Markdown render");
         window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
         await click('.room-dock button[aria-label="阅读排版"]');
         (await until(() => button("双屏"), "two-page option")).click();
-        await until(
-          () => query(".text-document[data-layout=double]"),
-          "two-page layout",
-        );
+        await until(() => renderer()?.columnCount === 2, "two-page layout");
         await click('button[aria-label="关闭阅读排版"]');
-        await click('button[aria-label="向下翻页"]');
-        await until(
-          () => query(".text-document").scrollLeft > 0,
-          "next Markdown spread",
-        );
+        await wheelTo(5, "第 3–4 页");
+        await until(() => renderer()?.page > 0, "next Markdown spread");
         await click('.room-dock button[aria-label="目录"]');
-        await click(".contents-list button:nth-child(31)");
-        const heading = query(
-          ".markdown-content h2:nth-of-type(31)",
-        ).getBoundingClientRect();
-        if (heading.left < 0 || heading.left >= innerWidth)
-          throw Error("Markdown destination is off screen");
+        await click(".contents-list button:nth-child(32)");
+        await until(() => {
+          const heading = content(".markdown-content h2:nth-of-type(31)");
+          if (!heading) return false;
+          const rect = heading.getBoundingClientRect();
+          const frame =
+            heading.ownerDocument.defaultView.frameElement.getBoundingClientRect();
+          return (
+            frame.left + rect.left >= 0 && frame.left + rect.left < innerWidth
+          );
+        }, "visible Markdown destination");
         await click('.room-dock button[aria-label="目录"]');
         await until(
           () =>
@@ -240,6 +321,33 @@
           "selected Markdown heading",
         );
         await click('button[aria-label="关闭目录"]');
+        await click('button[aria-label="书内搜索"]');
+        const field = query('input[type="search"][aria-label="搜索本书"]');
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "value",
+        ).set.call(field, "阅读进度");
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        const group = await until(
+          () =>
+            Array.from(document.querySelectorAll(".search-group")).find(
+              (el) =>
+                el.querySelector("summary span").textContent === "随笔 30",
+            ),
+          "chapter search group",
+        );
+        group.querySelector(".search-hit").click();
+        await until(
+          () =>
+            pages().some(({ doc }) => {
+              const found = doc.defaultView.CSS.highlights.get("found-passage");
+              return (
+                found &&
+                [...found].some((range) => range.toString() === "阅读进度")
+              );
+            }),
+          "selected passage highlight",
+        );
       }
       await sleep(400);
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

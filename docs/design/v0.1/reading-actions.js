@@ -13,15 +13,16 @@ Object.assign(actions,{
 spreadViewport.addEventListener('change',()=>{if(readingOpen)render()});
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(shellTheme==='system')render();else if(paper==='system' && readingOpen){document.querySelector('.reading-room').dataset.paper=resolvedPaper();syncBrowserChrome()}});
 function turnReadingPage(direction){
+  const pager=document.querySelector('edition-pages foliate-paginator');
+  if(pager){void (direction<0?pager.prev():pager.next());return}
   const text=document.querySelector('.text-document');
-  if(text?.dataset.layout==='double' && route!=='pdf'){
+  if(text && (route==='markdown' || text.dataset.layout==='double' && route!=='pdf')){
     const gap=parseFloat(getComputedStyle(text.firstElementChild).columnGap);
     const was=text.scrollLeft;
     text.scrollBy({left:direction*(text.clientWidth+gap)});
     if(Math.abs(text.scrollLeft-was)>1 || route==='markdown')return;
   }
   if(route==='reader') goToChapter(chapter+direction);
-  if(route==='markdown') document.querySelector('.reading-layer').scrollBy(0,direction*(innerHeight-140));
 }
 function enterPreview(hash){
   if(hash!=='settings' && !/^read-\d+$/.test(hash)) return;
